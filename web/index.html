@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Muistilista">
+    <title>Muistilista</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f2f2f7;
+            color: #1d1d1f;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Tabs ── */
+        .tab-bar {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(249,249,249,0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid #c6c6c8;
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0 4px;
+            font-size: 10px;
+            color: #8e8e93;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .tab.active { color: #0071e3; }
+
+        .tab svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 2px;
+        }
+
+        /* ── Page ── */
+        .page {
+            display: none;
+            padding: 0 0 90px;
+        }
+
+        .page.active { display: block; }
+
+        /* ── Header ── */
+        .page-header {
+            padding: 60px 20px 12px;
+            background: rgba(242,242,247,0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-header h1 {
+            font-size: 34px;
+            font-weight: 700;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(120,120,128,0.12);
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0071e3;
+        }
+
+        /* ── Progress ── */
+        .progress-bar {
+            margin: 12px 20px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .progress-track {
+            height: 6px;
+            background: #e5e5ea;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #0071e3;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.done { background: #34c759; }
+
+        /* ── List sections ── */
+        .section {
+            margin: 16px 20px 0;
+        }
+
+        .section-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6e6e73;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 16px 6px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #e5e5ea;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .item-row:last-child { border-bottom: none; }
+
+        .item-row:active { background: #f2f2f7; }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #c7c7cc;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .item-row.packed .check-icon {
+            background: #34c759;
+            border-color: #34c759;
+        }
+
+        .check-icon svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .item-row.packed .check-icon svg { opacity: 1; }
+
+        .item-name {
+            flex: 1;
+            font-size: 17px;
+            transition: color 0.2s;
+        }
+
+        .item-row.packed .item-name {
+            color: #8e8e93;
+            text-decoration: line-through;
+        }
+
+        /* ── Editor ── */
+        .editor-section {
+            margin: 12px 20px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .editor-cat-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .editor-cat-name {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 1px solid #e5e5ea;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .editor-cat-name:focus { border-color: #0071e3; }
+
+        .del-btn {
+            border: none;
+            background: none;
+            color: #ff3b30;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .editor-item-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .editor-item-input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 15px;
+            border: 1px solid #e5e5ea;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .editor-item-input:focus { border-color: #0071e3; }
+
+        .item-del {
+            border: none;
+            background: none;
+            color: #c7c7cc;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .item-del:hover { color: #ff3b30; }
+
+        .add-item-btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            color: #0071e3;
+            background: none;
+            border: 1px dashed #0071e3;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .add-cat-btn {
+            display: block;
+            margin: 16px 20px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            background: #0071e3;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            width: calc(100% - 40px);
+            text-align: center;
+        }
+
+        .list-name-input {
+            width: calc(100% - 40px);
+            margin: 12px 20px 0;
+            padding: 12px 16px;
+            font-size: 20px;
+            font-weight: 600;
+            border: 2px solid #e5e5ea;
+            border-radius: 12px;
+            outline: none;
+        }
+
+        .list-name-input:focus { border-color: #0071e3; }
+
+        /* ── QR ── */
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 20px;
+        }
+
+        #qrcode canvas {
+            border-radius: 12px;
+            max-width: 260px;
+        }
+
+        .qr-info {
+            font-size: 13px;
+            color: #8e8e93;
+            margin-top: 16px;
+        }
+
+        .qr-size {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 6px;
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            padding: 12px 32px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            background: #34c759;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        /* ── Reset confirm ── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .overlay.show { display: flex; }
+
+        .action-sheet {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+        }
+
+        .action-sheet p {
+            text-align: center;
+            font-size: 15px;
+            color: #8e8e93;
+            margin-bottom: 16px;
+        }
+
+        .action-sheet button {
+            width: 100%;
+            padding: 14px;
+            font-size: 17px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .action-sheet .destructive {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .action-sheet .cancel {
+            background: #e5e5ea;
+            color: #1d1d1f;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Pakkalista-sivu ── -->
+<div id="packPage" class="page active">
+    <div class="page-header">
+        <div class="header-row">
+            <h1 id="packTitle">Pakkalista</h1>
+            <div class="header-actions">
+                <button class="header-btn" onclick="showReset()" title="Nollaa">↺</button>
+            </div>
+        </div>
+    </div>
+    <div class="progress-bar">
+        <div class="progress-info">
+            <span>Pakattu</span>
+            <span id="progressText">0 / 0</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+    </div>
+    <div id="packList"></div>
+</div>
+
+<!-- ── Muokkaus-sivu ── -->
+<div id="editPage" class="page">
+    <div class="page-header">
+        <h1>Muokkaa listaa</h1>
+    </div>
+    <input type="text" class="list-name-input" id="listName" placeholder="Listan nimi..." oninput="onEditChange()">
+    <div id="editList"></div>
+    <button class="add-cat-btn" onclick="addCategory()">+ Lisää kategoria</button>
+</div>
+
+<!-- ── QR-sivu ── -->
+<div id="qrPage" class="page">
+    <div class="page-header">
+        <h1>QR-koodi</h1>
+    </div>
+    <div class="qr-container">
+        <div id="qrcode"></div>
+        <p class="qr-info">Skannaa tämä tuodaksesi listan toiseen laitteeseen</p>
+        <p class="qr-size" id="qrSize"></p>
+        <button class="download-btn" onclick="downloadQR()">Lataa PNG</button>
+    </div>
+</div>
+
+<!-- ── Tab bar ── -->
+<div class="tab-bar">
+    <button class="tab active" onclick="switchTab('pack')" id="tabPack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Lista
+    </button>
+    <button class="tab" onclick="switchTab('edit')" id="tabEdit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Muokkaa
+    </button>
+    <button class="tab" onclick="switchTab('qr')" id="tabQr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
+        QR
+    </button>
+</div>
+
+<!-- ── Reset overlay ── -->
+<div class="overlay" id="resetOverlay" onclick="hideReset()">
+    <div class="action-sheet" onclick="event.stopPropagation()">
+        <p>Nollataanko kaikki ruksat?</p>
+        <button class="destructive" onclick="resetAll()">Nollaa</button>
+        <button class="cancel" onclick="hideReset()">Peruuta</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+    const STORAGE_KEY = 'muistilista_data';
+
+    let store = loadStore();
+
+    function defaultData() {
+        return {
+            listName: "Mökkireissu",
+            categories: [
+                { name: "Laskettelu – sinä", items: [
+                    {n:"Sukset, sauvat, monot",p:false},{n:"Kypärä",p:false},{n:"Laskettelulasit",p:false},
+                    {n:"Laskettelutakki ja -housut",p:false},{n:"Aluskerrastot",p:false},{n:"Laskettelusukat",p:false},
+                    {n:"Hanskat/käsineet",p:false},{n:"Kauluri/buff",p:false},{n:"Aurinkovoide",p:false}
+                ]},
+                { name: "Laskettelu – lapset", items: [
+                    {n:"Laskettelutakki ja -housut",p:false},{n:"Aluskerrastot",p:false},{n:"Paksut sukat",p:false},
+                    {n:"Hanskat + varaparit",p:false},{n:"Kauluri/buff",p:false},{n:"Laskettelulasit",p:false},
+                    {n:"Aurinkovoide",p:false}
+                ]},
+                { name: "Vaatteet – kaikki", items: [
+                    {n:"Normivaatteet mökki-illoille (2 iltaa)",p:false},{n:"Alusvaatteet 3 päivälle",p:false},
+                    {n:"Ulkoiluvaatteet",p:false},{n:"Sisätossut/villasukat",p:false}
+                ]},
+                { name: "Sauna & peseytyminen", items: [
+                    {n:"Pyyhkeet",p:false},{n:"Uimapuvut",p:false},{n:"Shampoo, saippua",p:false},
+                    {n:"Hammasharjat, hammastahna",p:false},{n:"Deodorantti",p:false}
+                ]},
+                { name: "Ruoka & juoma", items: [
+                    {n:"Perjantain iltaruoka",p:false},{n:"Lauantain aamupala",p:false},{n:"Lounas",p:false},
+                    {n:"Iltaruoka + iltapala",p:false},{n:"Sunnuntain aamupala",p:false},
+                    {n:"Välipalat rinteeseen",p:false},{n:"Juomapullot/termospullot",p:false},{n:"Kahvi/tee/kaakao",p:false}
+                ]},
+                { name: "Auto & matka", items: [
+                    {n:"Laturit puhelimiin",p:false},{n:"Ensiaputarvikkeet",p:false},{n:"Käteistä/kortti",p:false},
+                    {n:"Hissiliput/varausvahvistus",p:false},{n:"Mökin avain/koodi",p:false},{n:"Pelejä/lautapelejä",p:false}
+                ]},
+                { name: "Muut", items: [
+                    {n:"Lääkkeet + särkylääke",p:false},{n:"Paperit/servietit",p:false},
+                    {n:"Roskapusseja",p:false},{n:"Taskulamppu",p:false}
+                ]}
+            ]
+        };
+    }
+
+    function loadStore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch(e) {}
+        return defaultData();
+    }
+
+    function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e) {}
+    }
+
+    // ── Tabs ──
+    function switchTab(tab) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tab + 'Page').classList.add('active');
+        document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+        if (tab === 'pack') renderPackList();
+        if (tab === 'edit') renderEditList();
+        if (tab === 'qr') updateQR();
+    }
+
+    // ── Pack list ──
+    function renderPackList() {
+        document.getElementById('packTitle').textContent = store.listName || 'Pakkalista';
+        const container = document.getElementById('packList');
+        container.innerHTML = '';
+
+        let total = 0, packed = 0;
+        store.categories.forEach((cat, ci) => {
+            cat.items.forEach(item => { total++; if (item.p) packed++; });
+        });
+
+        document.getElementById('progressText').textContent = `${packed} / ${total}`;
+        const pct = total > 0 ? (packed / total * 100) : 0;
+        const fill = document.getElementById('progressFill');
+        fill.style.width = pct + '%';
+        fill.className = 'progress-fill' + (packed === total && total > 0 ? ' done' : '');
+
+        store.categories.forEach((cat, ci) => {
+            const section = document.createElement('div');
+            section.className = 'section';
+            section.innerHTML = `<div class="section-header">${esc(cat.name)}</div>`;
+            const card = document.createElement('div');
+            card.className = 'section-card';
+
+            cat.items.forEach((item, ii) => {
+                const row = document.createElement('div');
+                row.className = 'item-row' + (item.p ? ' packed' : '');
+                row.onclick = () => toggleItem(ci, ii);
+                row.innerHTML = `
+                    <div class="check-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <span class="item-name">${esc(item.n)}</span>
+                `;
+                card.appendChild(row);
+            });
+
+            section.appendChild(card);
+            container.appendChild(section);
+        });
+    }
+
+    function toggleItem(ci, ii) {
+        store.categories[ci].items[ii].p = !store.categories[ci].items[ii].p;
+        save();
+        renderPackList();
+    }
+
+    // ── Editor ──
+    function renderEditList() {
+        document.getElementById('listName').value = store.listName;
+        const container = document.getElementById('editList');
+        container.innerHTML = '';
+
+        store.categories.forEach((cat, ci) => {
+            const section = document.createElement('div');
+            section.className = 'editor-section';
+            section.innerHTML = `
+                <div class="editor-cat-header">
+                    <input type="text" class="editor-cat-name" value="${escAttr(cat.name)}"
+                        oninput="updateCatName(${ci}, this.value)">
+                    <button class="del-btn" onclick="deleteCat(${ci})">×</button>
+                </div>
+                <div id="editItems-${ci}">
+                    ${cat.items.map((item, ii) => `
+                        <div class="editor-item-row">
+                            <input type="text" class="editor-item-input" value="${escAttr(item.n)}"
+                                oninput="updateItemName(${ci}, ${ii}, this.value)">
+                            <button class="item-del" onclick="deleteItem(${ci}, ${ii})">×</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="add-item-btn" onclick="addItem(${ci})">+ Lisää tavara</button>
+            `;
+            container.appendChild(section);
+        });
+    }
+
+    function onEditChange() {
+        store.listName = document.getElementById('listName').value;
+        save();
+    }
+
+    function updateCatName(ci, val) {
+        store.categories[ci].name = val;
+        save();
+    }
+
+    function updateItemName(ci, ii, val) {
+        store.categories[ci].items[ii].n = val;
+        save();
+    }
+
+    function addItem(ci) {
+        store.categories[ci].items.push({n:'', p:false});
+        save();
+        renderEditList();
+        const inputs = document.querySelectorAll(`#editItems-${ci} .editor-item-input`);
+        if (inputs.length) inputs[inputs.length - 1].focus();
+    }
+
+    function deleteItem(ci, ii) {
+        store.categories[ci].items.splice(ii, 1);
+        save();
+        renderEditList();
+    }
+
+    function addCategory() {
+        store.categories.push({name: 'Uusi kategoria', items: [{n:'', p:false}]});
+        save();
+        renderEditList();
+    }
+
+    function deleteCat(ci) {
+        store.categories.splice(ci, 1);
+        save();
+        renderEditList();
+    }
+
+    // ── Reset ──
+    function showReset() { document.getElementById('resetOverlay').classList.add('show'); }
+    function hideReset() { document.getElementById('resetOverlay').classList.remove('show'); }
+    function resetAll() {
+        store.categories.forEach(cat => cat.items.forEach(item => item.p = false));
+        save();
+        hideReset();
+        renderPackList();
+    }
+
+    // ── QR ──
+    function getQRData() {
+        return JSON.stringify({
+            n: store.listName,
+            items: store.categories.filter(c => c.name.trim() || c.items.some(i => i.n.trim())).map(c => ({
+                c: c.name,
+                i: c.items.filter(i => i.n.trim()).map(i => i.n)
+            }))
+        });
+    }
+
+    function updateQR() {
+        const container = document.getElementById('qrcode');
+        const jsonStr = getQRData();
+        container.innerHTML = '';
+
+        try {
+            let qr = null;
+            for (const ecl of ['L', 'M']) {
+                try {
+                    qr = qrcode(0, ecl);
+                    qr.addData(jsonStr);
+                    qr.make();
+                    break;
+                } catch(e) { qr = null; }
+            }
+
+            if (!qr) {
+                container.innerHTML = '<p style="color:#ff3b30;font-size:14px;padding:20px;">Lista on liian pitkä QR-koodiin. Lyhennä nimiä.</p>';
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const moduleCount = qr.getModuleCount();
+            const cellSize = Math.max(3, Math.floor(240 / moduleCount));
+            const size = moduleCount * cellSize;
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, size, size);
+            for (let r = 0; r < moduleCount; r++) {
+                for (let c = 0; c < moduleCount; c++) {
+                    ctx.fillStyle = qr.isDark(r, c) ? '#000' : '#fff';
+                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                }
+            }
+            container.appendChild(canvas);
+            document.getElementById('qrSize').textContent = `${jsonStr.length} merkkiä`;
+        } catch(e) {
+            container.innerHTML = '<p style="color:#ff3b30;font-size:14px;">QR-koodin luonti epäonnistui</p>';
+        }
+    }
+
+    function downloadQR() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (!canvas) return;
+        const scale = 4;
+        const dl = document.createElement('canvas');
+        dl.width = canvas.width * scale;
+        dl.height = canvas.height * scale;
+        const ctx = dl.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(canvas, 0, 0, dl.width, dl.height);
+        const link = document.createElement('a');
+        link.download = 'muistilista-qr.png';
+        link.href = dl.toDataURL('image/png');
+        link.click();
+    }
+
+    // ── QR import from URL ──
+    function checkURLImport() {
+        const params = new URLSearchParams(window.location.search);
+        const qrData = params.get('list');
+        if (qrData) {
+            try {
+                const parsed = JSON.parse(decodeURIComponent(qrData));
+                store.listName = parsed.n;
+                store.categories = parsed.items.map(c => ({
+                    name: c.c,
+                    items: c.i.map(n => ({n, p: false}))
+                }));
+                save();
+                window.history.replaceState({}, '', window.location.pathname);
+            } catch(e) {}
+        }
+    }
+
+    // ── Helpers ──
+    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ── Init ──
+    checkURLImport();
+    renderPackList();
+</script>
+</body>
+</html>

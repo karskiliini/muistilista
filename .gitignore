@@ -1,0 +1,6 @@
+# Xcode
+Muistilista/Muistilista.xcodeproj/xcuserdata/
+Muistilista/Muistilista.xcodeproj/project.xcworkspace/
+DerivedData/
+*.xcuserstate
+.DS_Store
