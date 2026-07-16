@@ -90,6 +90,21 @@ enum CoreDataStack {
         itemShelf.attributeType = .stringAttributeType
         itemShelf.isOptional = true
 
+        let itemPrice = NSAttributeDescription()
+        itemPrice.name = "catalogPrice"
+        itemPrice.attributeType = .stringAttributeType
+        itemPrice.isOptional = true
+
+        let itemDesc = NSAttributeDescription()
+        itemDesc.name = "productDescription"
+        itemDesc.attributeType = .stringAttributeType
+        itemDesc.isOptional = true
+
+        let itemImages = NSAttributeDescription()
+        itemImages.name = "imageURLsString"
+        itemImages.attributeType = .stringAttributeType
+        itemImages.isOptional = true
+
         // Family shelf memory: (product, store) -> shelf location.
         let memoryEntity = NSEntityDescription()
         memoryEntity.name = "CDShelfMemory"
@@ -134,7 +149,8 @@ enum CoreDataStack {
         memoriesRel.inverseRelationship = memListRel
         memListRel.inverseRelationship = memoriesRel
 
-        entity.properties = [name, isDone, createdAt, quantity, uuid, listRel, itemStore, itemShelf]
+        entity.properties = [name, isDone, createdAt, quantity, uuid, listRel,
+                             itemStore, itemShelf, itemPrice, itemDesc, itemImages]
         listEntity.properties = [listName, listCreatedAt, itemsRel, memoriesRel]
         memoryEntity.properties = [memProduct, memStore, memShelf, memUpdatedAt, memListRel]
 

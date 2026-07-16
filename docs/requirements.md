@@ -77,10 +77,16 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   valinta muistetaan. Kun valittu kauppa on S-ryhmää, tuotenimen kirjoittaminen
   hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
   vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
-  Muille kaupoille (esim. K-ryhmä ennen API-avainta) käytetään
-  vapaasanalisäystä samassa lomakkeessa. Listarivillä näkyy kauppa ja
-  hyllypaikka pienellä toisella rivillä. Vapaasanalisäys päänäkymässä ei
-  muutu tästä millään tavalla.
+  Muille kaupoille käytetään vapaasanalisäystä samassa lomakkeessa.
+  Toteutetut hakuproviderit: S-ryhmä (s-kaupat) ja Puuilo (Algolia, avain
+  haetaan dynaamisesti sivulta koska se vanhenee). Tokmanni (Klevu),
+  K-Rauta (Loop54) ja Kesko (avain) ovat providerirakenteessa mutta
+  vaativat lisäselvityksen/avaimen. Vapaasanalisäys päänäkymässä ei muutu
+  tästä millään tavalla.
+- **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
+  ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
+  hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla
+  ei ole mitään extraa — pelkkä nimi.
 - **R25** 🔄 Hyllypaikan lähde riippuu kaupasta: ne kaupat jotka tarjoavat
   hyllypaikan rajapinnassaan (esim. Motonet, rautakaupat), näyttävät sen
   suoraan katalogituloksessa ja tallentavat sen riville. Ne jotka eivät

@@ -96,6 +96,41 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(SKaupatCatalog.parse(Data("nonsense".utf8)).count, 0)
     }
 
+    func testPuuiloParseExtractsPriceImagesAndCategory() {
+        let json = """
+        {"hits":[{
+          "objectID":"10165538","name":"Woima vapaa-ajan akku 55AH",
+          "price":{"EUR":{"default":59.9,"default_formated":"59,90"}},
+          "image_url":"https://www.puuilo.fi/media/a.png","thumbnail_url":"https://www.puuilo.fi/media/t.png",
+          "product_brand":"Woima","categories_without_path":["Vapaa-ajan akut"],"sku":"10165538"
+        }]}
+        """.data(using: .utf8)!
+        let products = PuuiloCatalog.parse(json)
+        XCTAssertEqual(products.count, 1)
+        let p = products[0]
+        XCTAssertEqual(p.name, "Woima vapaa-ajan akku 55AH")
+        XCTAssertEqual(p.priceText, "59,90 €")
+        XCTAssertEqual(p.brand, "Woima")
+        XCTAssertEqual(p.categoryPath, ["Vapaa-ajan akut"])
+        XCTAssertEqual(p.imageURLs.count, 1)
+    }
+
+    func testPuuiloHandlesOnlyPuuilo() {
+        XCTAssertTrue(PuuiloCatalog.handles(storeName: "Puuilo"))
+        XCTAssertFalse(PuuiloCatalog.handles(storeName: "Prisma"))
+    }
+
+    func testPuuiloKeyExtractionFromEscapedConfig() {
+        let html = #"..."applicationId":"HH40ESW4PH","indexName":"puuilo_fi","apiKey":"ABC123secured"..."#
+        XCTAssertEqual(PuuiloKey.extractKey(from: Data(html.utf8)), "ABC123secured")
+    }
+
+    func testCatalogRegistryRoutesStores() {
+        XCTAssertTrue(CatalogRegistry.provider(for: "Prisma") is SKaupatCatalog)
+        XCTAssertTrue(CatalogRegistry.provider(for: "Puuilo") is PuuiloCatalog)
+        XCTAssertNil(CatalogRegistry.provider(for: "Lidl"))
+    }
+
     func testSKaupatCatalogHandlesSGroupStoreNames() {
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "Prisma Kuopio"))
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "S-market Saarijärvi"))

@@ -6,6 +6,7 @@ struct ShoppingRowView: View {
 
     /// Live value while scrubbing; nil when no drag is active.
     @State private var dragQuantity: Int?
+    @State private var showingDetail = false
 
     private var isScrubbing: Bool { dragQuantity != nil }
 
@@ -19,6 +20,15 @@ struct ShoppingRowView: View {
         HStack(spacing: 12) {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
+            if item.isFromStore, let thumb = item.imageURLs.first {
+                AsyncImage(url: thumb) { image in
+                    image.resizable().scaledToFit()
+                } placeholder: {
+                    Image(systemName: "photo").font(.caption).foregroundStyle(.quaternary)
+                }
+                .frame(width: 32, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
                     .strikethrough(item.isDone)
@@ -27,9 +37,15 @@ struct ShoppingRowView: View {
                     Text(subtitle)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
             Spacer()
+            if let price = item.catalogPrice, !price.isEmpty, !isScrubbing {
+                Text(price)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
             if isScrubbing {
                 Text("× \(dragQuantity ?? Int(item.quantity))")
                     .font(.headline.monospacedDigit())
@@ -43,15 +59,25 @@ struct ShoppingRowView: View {
                     .font(.headline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            // Hint: this edge pulls left to delete (system swipe action).
-            Image(systemName: "chevron.compact.left")
-                .font(.callout.weight(.semibold))
-                .foregroundStyle(.tertiary)
+            if item.isFromStore {
+                Button { showingDetail = true } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Tuotetiedot")
+            } else {
+                // Hint: this edge pulls left to delete (system swipe action).
+                Image(systemName: "chevron.compact.left")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .animation(.spring(duration: 0.2), value: dragQuantity)
         .contentShape(Rectangle())
         .onTapGesture(perform: onToggle)
         .simultaneousGesture(quantityDrag)
+        .sheet(isPresented: $showingDetail) { ItemDetailView(item: item) }
     }
 
     private var quantityDrag: some Gesture {

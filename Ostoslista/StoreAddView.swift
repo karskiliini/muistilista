@@ -142,21 +142,25 @@ struct StoreAddView: View {
         // else the category breadcrumb as a coarse hint.
         let shelfHint = product.shelfLocation
             ?? (shelf.isEmpty ? ShoppingListLogic.categoryHint(product.categoryPath) : shelf)
-        insert(name: product.name, shelfHint: shelfHint)
+        insert(name: product.name, shelfHint: shelfHint, catalog: product)
     }
 
     private func addManual() {
         guard let name = ShoppingListLogic.normalized(productName) else { return }
-        insert(name: name, shelfHint: ShoppingListLogic.normalized(shelf))
+        insert(name: name, shelfHint: ShoppingListLogic.normalized(shelf), catalog: nil)
     }
 
-    /// Shared insert: item lands in the list's store, remembers the shelf.
-    private func insert(name: String, shelfHint: String?) {
+    /// Shared insert: item lands in the list's store, remembers the shelf,
+    /// and carries the catalog's price/description/images when present.
+    private func insert(name: String, shelfHint: String?, catalog: CatalogProduct?) {
         guard let storeTrimmed = ShoppingListLogic.normalized(storeName) else { return }
         let item = CDShoppingItem(context: context)
         item.name = name
         item.storeName = storeTrimmed
         item.shelfLocation = shelfHint
+        item.catalogPrice = catalog?.priceText
+        item.productDescription = catalog?.description
+        item.imageURLsString = catalog?.imageURLs.map(\.absoluteString).joined(separator: "\n")
         if let list = store.currentList {
             if let listStore = list.objectID.persistentStore { context.assign(item, to: listStore) }
             item.list = list
