@@ -5,7 +5,7 @@ import WidgetKit
 struct OstoslistaApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
-    private let container = CoreDataStack.container()
+    private let container = CoreDataStack.container(cloudKit: true)
 
     var body: some Scene {
         WindowGroup {

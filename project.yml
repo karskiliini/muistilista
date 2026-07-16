@@ -11,19 +11,27 @@ targets:
     sources: [Ostoslista]
     dependencies:
       - target: OstoslistaWidget
+        platformFilter: iOS
     entitlements:
       path: Ostoslista/Ostoslista.entitlements
       properties:
         com.apple.security.application-groups:
           - group.fi.maaranen.ostoslista
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.fi.maaranen.ostoslista
+        com.apple.developer.icloud-services:
+          - CloudKit
+        aps-environment: development
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIBackgroundModes: remote-notification
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 37SJ6TU5RP
   OstoslistaWidget:

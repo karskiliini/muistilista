@@ -41,19 +41,38 @@ enum CoreDataStack {
         return model
     }()
 
-    static func container(inMemory: Bool = false) -> NSPersistentContainer {
-        let container = NSPersistentContainer(name: "Ostoslista", managedObjectModel: model)
-        if inMemory {
-            container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
-        } else if let base = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
-            container.persistentStoreDescriptions.first?.url =
-                base.appendingPathComponent("OstoslistaCD.sqlite")
+    static let cloudKitContainerID = "iCloud.fi.maaranen.ostoslista"
+
+    /// `cloudKit: true` (the app) syncs through CloudKit; the widget and
+    /// tests read the same store without any CloudKit machinery.
+    static func container(inMemory: Bool = false, cloudKit: Bool = false) -> NSPersistentContainer {
+        let container: NSPersistentContainer = cloudKit
+            ? NSPersistentCloudKitContainer(name: "Ostoslista", managedObjectModel: model)
+            : NSPersistentContainer(name: "Ostoslista", managedObjectModel: model)
+        if let description = container.persistentStoreDescriptions.first {
+            if inMemory {
+                description.url = URL(fileURLWithPath: "/dev/null")
+            } else if let base = FileManager.default
+                .containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+                description.url = base.appendingPathComponent("OstoslistaCD.sqlite")
+                // Both processes must agree on history tracking once the
+                // CloudKit-syncing app enables it.
+                description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+                description.setOption(true as NSNumber,
+                                      forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+                if cloudKit {
+                    description.cloudKitContainerOptions =
+                        NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerID)
+                }
+            }
         }
         container.loadPersistentStores { _, error in
             if let error { fatalError("Cannot load store: \(error)") }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+        if cloudKit {
+            container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        }
         return container
     }
 }
