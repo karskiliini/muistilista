@@ -9,6 +9,13 @@ targets:
     type: application
     platform: iOS
     sources: [Ostoslista]
+    dependencies:
+      - target: OstoslistaWidget
+    entitlements:
+      path: Ostoslista/Ostoslista.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.fi.maaranen.ostoslista
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
@@ -19,6 +26,32 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 37SJ6TU5RP
+  OstoslistaWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - OstoslistaWidget
+      - Ostoslista/ShoppingItem.swift
+      - Ostoslista/SharedStore.swift
+    entitlements:
+      path: OstoslistaWidget/OstoslistaWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.fi.maaranen.ostoslista
+    info:
+      path: OstoslistaWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Ostoslista
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista.widget
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 37SJ6TU5RP
+        SKIP_INSTALL: YES
   OstoslistaTests:
     type: bundle.unit-test
     platform: iOS
