@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Requirements register: compare this prompt against docs/requirements.md (see .claude/skills/requirements). If the prompt adds, changes, or removes app behavior, update the register in the same turn.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
