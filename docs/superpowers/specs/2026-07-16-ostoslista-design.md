@@ -66,17 +66,19 @@ Single-target SwiftUI app plus a unit-test target.
 
 ## Feature: drag-to-set quantity (added 2026-07-16, user-approved)
 
-Unchecked rows show a drag bar at the trailing edge: a "× N" pill with a
-left-right arrow (dimmed when N = 1). Scrubbing the pill horizontally sets
-the quantity — one step per 36 pt in either direction, starting from the
-item's current quantity, minimum 1; lifting the finger commits. During the
-scrub the pill turns blue and enlarges. The gesture lives only on the pill
-(user feedback 2026-07-16: middle of the row stays free for tap-to-toggle,
-swipe-to-delete, and scrolling; a whole-row gesture was hard to discover).
-Checked rows cannot scrub; they show a plain secondary "× N" when N > 1.
-Model gains `quantity: Int = 1` (SwiftData lightweight migration). Mapping
-lives in `ShoppingListLogic.quantity(start:dragWidth:)` (unit-tested).
-Mostly-vertical drags on the pill are ignored so scrolling still works.
+Dragging an unchecked row rightward (from anywhere on the row, via
+simultaneousGesture so system gestures keep working) scrubs the quantity:
+a blue "× N" pill appears and N moves one step per 36 pt, starting from
+the item's current quantity, minimum 1; dragging back left in the same
+gesture lowers it; lifting commits. When idle, rows with quantity > 1
+show a plain secondary "× N". Every row ends with a small
+`chevron.compact.left` grip — a visual hint that pulling the row leftward
+deletes it (the deletion itself is the system swipe action). Checked rows
+cannot scrub. Model gains `quantity: Int = 1` (SwiftData lightweight
+migration); mapping lives in `ShoppingListLogic.quantity(start:dragWidth:)`
+(unit-tested). Drags that begin leftward or mostly vertical are ignored so
+swipe-to-delete and scrolling keep working. (Interaction shape settled
+over three feedback rounds on 2026-07-16.)
 
 ## Out of scope (YAGNI)
 

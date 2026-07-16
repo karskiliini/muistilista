@@ -17,46 +17,42 @@ struct ShoppingRowView: View {
                 .strikethrough(item.isDone)
                 .foregroundStyle(item.isDone ? .secondary : .primary)
             Spacer()
-            if item.isDone {
-                if item.quantity > 1 {
-                    Text("× \(item.quantity)")
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                quantityHandle
+            if isScrubbing {
+                Text("× \(dragQuantity ?? item.quantity)")
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(Color.blue, in: Capsule())
+                    .scaleEffect(1.25, anchor: .trailing)
+            } else if item.quantity > 1 {
+                Text("× \(item.quantity)")
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
+            // Hint: this edge pulls left to delete (system swipe action).
+            Image(systemName: "chevron.compact.left")
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
         .animation(.spring(duration: 0.2), value: dragQuantity)
         .contentShape(Rectangle())
         .onTapGesture(perform: onToggle)
-    }
-
-    /// The drag bar: a pill at the trailing edge. Scrub it left/right to
-    /// set the quantity; the rest of the row stays free for other gestures.
-    private var quantityHandle: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "arrow.left.and.right")
-                .font(.caption2.weight(.bold))
-            Text("× \(dragQuantity ?? item.quantity)")
-                .font(.headline.monospacedDigit())
-        }
-        .foregroundStyle(isScrubbing ? Color.white
-                         : item.quantity > 1 ? Color.secondary : Color.secondary.opacity(0.45))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(isScrubbing ? AnyShapeStyle(Color.blue) : AnyShapeStyle(.quinary), in: Capsule())
-        .scaleEffect(isScrubbing ? 1.25 : 1.0, anchor: .trailing)
-        .contentShape(Rectangle())
-        .gesture(quantityDrag)
+        .simultaneousGesture(quantityDrag)
     }
 
     private var quantityDrag: some Gesture {
-        DragGesture(minimumDistance: 10)
+        DragGesture(minimumDistance: 25)
             .onChanged { value in
-                // Mostly-horizontal check on activation keeps list scrolling free.
+                // Checked items keep their final quantity — no scrubbing.
+                guard !item.isDone else { return }
+                // Activate only on a drag that starts rightward and mostly
+                // horizontal; leftward drags belong to swipe-to-delete and
+                // vertical ones to scrolling.
                 if dragQuantity == nil {
-                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    guard value.translation.width > 0,
+                          abs(value.translation.width) > abs(value.translation.height)
+                    else { return }
                 }
                 dragQuantity = ShoppingListLogic.quantity(
                     start: item.quantity,
