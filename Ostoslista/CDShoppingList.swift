@@ -7,6 +7,7 @@ final class CDShoppingList: NSManagedObject {
     @NSManaged var name: String
     @NSManaged var createdAt: Date
     @NSManaged var items: Set<CDShoppingItem>
+    @NSManaged var shelfMemories: Set<CDShelfMemory>
 
     override func awakeFromInsert() {
         super.awakeFromInsert()

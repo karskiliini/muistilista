@@ -68,6 +68,11 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(victims, ["a"])
     }
 
+    func testShelfKeyNormalizesCaseAndWhitespace() {
+        XCTAssertEqual(ShoppingListLogic.shelfKey("  Maito "), "maito")
+        XCTAssertEqual(ShoppingListLogic.shelfKey("RUISLEIPÄ"), "ruisleipä")
+    }
+
     func testChangeSummaryFormatsAllChangeKinds() {
         XCTAssertEqual(
             ShoppingListLogic.changeSummary(added: ["maito"], updated: ["leipä"], deletedCount: 2),

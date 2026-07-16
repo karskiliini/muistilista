@@ -38,7 +38,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.7.0
+        MARKETING_VERSION: 1.8.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
@@ -53,6 +53,7 @@ targets:
       - OstoslistaWidget
       - Ostoslista/CDShoppingItem.swift
       - Ostoslista/CDShoppingList.swift
+      - Ostoslista/CDShelfMemory.swift
       - Ostoslista/CoreDataStack.swift
       - Ostoslista/ShoppingListLogic.swift
     entitlements:

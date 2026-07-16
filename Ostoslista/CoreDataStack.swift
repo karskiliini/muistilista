@@ -79,11 +79,67 @@ enum CoreDataStack {
         itemsRel.inverseRelationship = listRel
         listRel.inverseRelationship = itemsRel
 
-        entity.properties = [name, isDone, createdAt, quantity, uuid, listRel]
-        listEntity.properties = [listName, listCreatedAt, itemsRel]
+        // Optional store metadata on items (set by the store-add flow).
+        let itemStore = NSAttributeDescription()
+        itemStore.name = "storeName"
+        itemStore.attributeType = .stringAttributeType
+        itemStore.isOptional = true
+
+        let itemShelf = NSAttributeDescription()
+        itemShelf.name = "shelfLocation"
+        itemShelf.attributeType = .stringAttributeType
+        itemShelf.isOptional = true
+
+        // Family shelf memory: (product, store) -> shelf location.
+        let memoryEntity = NSEntityDescription()
+        memoryEntity.name = "CDShelfMemory"
+        memoryEntity.managedObjectClassName = "CDShelfMemory"
+
+        let memProduct = NSAttributeDescription()
+        memProduct.name = "productKey"
+        memProduct.attributeType = .stringAttributeType
+        memProduct.defaultValue = ""
+
+        let memStore = NSAttributeDescription()
+        memStore.name = "storeName"
+        memStore.attributeType = .stringAttributeType
+        memStore.defaultValue = ""
+
+        let memShelf = NSAttributeDescription()
+        memShelf.name = "shelfLocation"
+        memShelf.attributeType = .stringAttributeType
+        memShelf.defaultValue = ""
+
+        let memUpdatedAt = NSAttributeDescription()
+        memUpdatedAt.name = "updatedAt"
+        memUpdatedAt.attributeType = .dateAttributeType
+        memUpdatedAt.defaultValue = Date(timeIntervalSince1970: 0)
+
+        let memoriesRel = NSRelationshipDescription()
+        memoriesRel.name = "shelfMemories"
+        memoriesRel.destinationEntity = memoryEntity
+        memoriesRel.minCount = 0
+        memoriesRel.maxCount = 0
+        memoriesRel.isOptional = true
+        memoriesRel.deleteRule = .cascadeDeleteRule
+
+        let memListRel = NSRelationshipDescription()
+        memListRel.name = "list"
+        memListRel.destinationEntity = listEntity
+        memListRel.minCount = 0
+        memListRel.maxCount = 1
+        memListRel.isOptional = true
+        memListRel.deleteRule = .nullifyDeleteRule
+
+        memoriesRel.inverseRelationship = memListRel
+        memListRel.inverseRelationship = memoriesRel
+
+        entity.properties = [name, isDone, createdAt, quantity, uuid, listRel, itemStore, itemShelf]
+        listEntity.properties = [listName, listCreatedAt, itemsRel, memoriesRel]
+        memoryEntity.properties = [memProduct, memStore, memShelf, memUpdatedAt, memListRel]
 
         let model = NSManagedObjectModel()
-        model.entities = [entity, listEntity]
+        model.entities = [entity, listEntity, memoryEntity]
         return model
     }()
 

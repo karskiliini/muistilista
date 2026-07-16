@@ -12,6 +12,7 @@ struct ShoppingListView: View {
     @State private var activeShare: CKShare?
     @State private var shareContainer: CKContainer?
     @State private var sharePresented = false
+    @State private var storeAddPresented = false
 
     private var sortedItems: [CDShoppingItem] { ShoppingListLogic.sorted(Array(items)) }
     private var checkedCount: Int { ShoppingListLogic.checked(Array(items)).count }
@@ -20,10 +21,19 @@ struct ShoppingListView: View {
         NavigationStack {
             List {
                 Section {
-                    TextField("Lisää tuote…", text: $newItemName)
-                        .focused($inputFocused)
-                        .submitLabel(.done)
-                        .onSubmit(addItem)
+                    HStack {
+                        TextField("Lisää tuote…", text: $newItemName)
+                            .focused($inputFocused)
+                            .submitLabel(.done)
+                            .onSubmit(addItem)
+                        Button {
+                            storeAddPresented = true
+                        } label: {
+                            Label("Kauppa", systemImage: "storefront")
+                                .labelStyle(.iconOnly)
+                        }
+                        .buttonStyle(.borderless)
+                    }
                 }
                 if !items.isEmpty {
                     Section {
@@ -79,6 +89,9 @@ struct ShoppingListView: View {
                 if let activeShare, let shareContainer {
                     CloudSharingView(share: activeShare, container: shareContainer)
                 }
+            }
+            .sheet(isPresented: $storeAddPresented) {
+                StoreAddView()
             }
         }
     }

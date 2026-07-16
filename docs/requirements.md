@@ -70,6 +70,17 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
+- **R23** 🔄 Tuotteen voi VALINNAISESTI lisätä kaupan kautta: hakukentän
+  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa (viimeisin
+  muistetaan) ja tuote; rivillä näkyy silloin kauppa ja hyllypaikka
+  pienellä toisella rivillä. Vapaasanalisäys ei muutu eikä monimutkaistu
+  tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
+  haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
+  kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)
+- **R24** ✅ Perheen hyllymuisti: kun tuotteelle annetaan hyllypaikka
+  kaupassa (käsin tai katalogista), pari (tuote, kauppa) → hyllypaikka
+  muistetaan, synkkautuu perheelle ja esitäytetään seuraavalla kerralla —
+  kaikissa kaupoissa, myös ilman katalogirajapintaa.
 
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 

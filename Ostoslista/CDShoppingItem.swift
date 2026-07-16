@@ -8,6 +8,8 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var quantity: Int64
     @NSManaged var uuid: UUID?
     @NSManaged var list: CDShoppingList?
+    @NSManaged var storeName: String?
+    @NSManaged var shelfLocation: String?
 
     override func awakeFromInsert() {
         super.awakeFromInsert()

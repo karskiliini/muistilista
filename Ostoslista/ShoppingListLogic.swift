@@ -32,6 +32,12 @@ enum ShoppingListLogic {
         max(1, start + Int(dragWidth / 36))
     }
 
+    /// Normalized key for shelf-memory lookups: the same product matches
+    /// regardless of letter case and surrounding whitespace.
+    static func shelfKey(_ product: String) -> String {
+        product.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
     /// One-line summary of a remote change batch for the notification
     /// banner, or nil when there is nothing worth announcing.
     static func changeSummary(added: [String], updated: [String], deletedCount: Int) -> String? {

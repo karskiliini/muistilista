@@ -142,6 +142,59 @@ final class StoreProvider: ObservableObject {
         return (share, shareContainer)
     }
 
+    // MARK: - Family shelf memory
+
+    /// Remember (product, store) → shelf so the whole family gets the
+    /// location pre-filled next time. Empty shelf input is ignored.
+    @MainActor
+    func rememberShelf(product: String, store storeName: String, shelf: String?) {
+        guard let shelf = ShoppingListLogic.normalized(shelf ?? "") else { return }
+        let context = container.viewContext
+        let key = ShoppingListLogic.shelfKey(product)
+        let request = CDShelfMemory.fetchRequest()
+        request.predicate = NSPredicate(format: "productKey == %@ AND storeName == %@", key, storeName)
+        let memory: CDShelfMemory
+        if let existing = (try? context.fetch(request))?.first {
+            memory = existing
+        } else {
+            memory = CDShelfMemory(context: context)
+            if let list = currentList, let listStore = list.objectID.persistentStore {
+                context.assign(memory, to: listStore)
+            }
+            memory.list = currentList
+            memory.productKey = key
+            memory.storeName = storeName
+        }
+        memory.shelfLocation = shelf
+        memory.updatedAt = .now
+        try? context.save()
+    }
+
+    @MainActor
+    func recallShelf(product: String, store storeName: String) -> String? {
+        let request = CDShelfMemory.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "productKey == %@ AND storeName == %@",
+            ShoppingListLogic.shelfKey(product), storeName)
+        request.fetchLimit = 1
+        guard let shelf = (try? container.viewContext.fetch(request))?.first?.shelfLocation,
+              !shelf.isEmpty else { return nil }
+        return shelf
+    }
+
+    /// Store names used before, most recently updated first.
+    @MainActor
+    func knownStores() -> [String] {
+        let request = CDShelfMemory.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "updatedAt", ascending: false)]
+        let fromMemories = ((try? container.viewContext.fetch(request)) ?? []).map(\.storeName)
+        let itemRequest = CDShoppingItem.fetchRequest()
+        let fromItems = ((try? container.viewContext.fetch(itemRequest)) ?? [])
+            .compactMap(\.storeName)
+        var seen = Set<String>()
+        return (fromMemories + fromItems).filter { !$0.isEmpty && seen.insert($0).inserted }
+    }
+
     /// Called when the user accepts a share invitation (family member side).
     func acceptShare(metadata: CKShare.Metadata) {
         guard let ck = container as? NSPersistentCloudKitContainer,

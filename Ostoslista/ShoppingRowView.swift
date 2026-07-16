@@ -9,13 +9,26 @@ struct ShoppingRowView: View {
 
     private var isScrubbing: Bool { dragQuantity != nil }
 
+    /// "K-CM Kuopio · käytävä 12" — only for items added via a store.
+    private var storeSubtitle: String? {
+        let parts = [item.storeName, item.shelfLocation].compactMap { $0 }.filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
-            Text(item.name)
-                .strikethrough(item.isDone)
-                .foregroundStyle(item.isDone ? .secondary : .primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .strikethrough(item.isDone)
+                    .foregroundStyle(item.isDone ? .secondary : .primary)
+                if let subtitle = storeSubtitle {
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
             Spacer()
             if isScrubbing {
                 Text("× \(dragQuantity ?? Int(item.quantity))")
