@@ -1,6 +1,6 @@
 import WidgetKit
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct CountEntry: TimelineEntry {
     let date: Date
@@ -23,13 +23,10 @@ struct CountProvider: TimelineProvider {
     }
 
     private func remainingCount() -> Int {
-        do {
-            let context = ModelContext(try SharedStore.container())
-            let descriptor = FetchDescriptor<ShoppingItem>(predicate: #Predicate { !$0.isDone })
-            return try context.fetchCount(descriptor)
-        } catch {
-            return 0
-        }
+        let context = CoreDataStack.container().viewContext
+        let request = CDShoppingItem.fetchRequest()
+        request.predicate = NSPredicate(format: "isDone == NO")
+        return (try? context.count(for: request)) ?? 0
     }
 }
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ShoppingRowView: View {
-    let item: ShoppingItem
+    @ObservedObject var item: CDShoppingItem
     let onToggle: () -> Void
 
     /// Live value while scrubbing; nil when no drag is active.
@@ -18,7 +18,7 @@ struct ShoppingRowView: View {
                 .foregroundStyle(item.isDone ? .secondary : .primary)
             Spacer()
             if isScrubbing {
-                Text("× \(dragQuantity ?? item.quantity)")
+                Text("× \(dragQuantity ?? Int(item.quantity))")
                     .font(.headline.monospacedDigit())
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
@@ -55,12 +55,15 @@ struct ShoppingRowView: View {
                     else { return }
                 }
                 dragQuantity = ShoppingListLogic.quantity(
-                    start: item.quantity,
+                    start: Int(item.quantity),
                     dragWidth: value.translation.width
                 )
             }
             .onEnded { _ in
-                if let dragQuantity { item.quantity = dragQuantity }
+                if let dragQuantity {
+                    item.quantity = Int64(dragQuantity)
+                    try? item.managedObjectContext?.save()
+                }
                 dragQuantity = nil
             }
     }

@@ -1,7 +1,19 @@
 import XCTest
+import CoreData
 @testable import Ostoslista
 
+/// Plain fixture — logic must not depend on any persistence framework.
+private struct FixtureItem: ShoppingItemLike {
+    let isDone: Bool
+    let createdAt: Date
+    var name: String
+}
+
 final class ShoppingListLogicTests: XCTestCase {
+    private func item(_ name: String, done: Bool, at seconds: TimeInterval = 0) -> FixtureItem {
+        FixtureItem(isDone: done, createdAt: Date(timeIntervalSince1970: seconds), name: name)
+    }
+
     func testNormalizedTrimsWhitespace() {
         XCTAssertEqual(ShoppingListLogic.normalized("  maito \n"), "maito")
     }
@@ -12,17 +24,20 @@ final class ShoppingListLogicTests: XCTestCase {
     }
 
     func testSortedPutsUncheckedFirstThenOldestFirst() {
-        let bread  = ShoppingItem(name: "leipä", isDone: true,  createdAt: Date(timeIntervalSince1970: 1))
-        let milk   = ShoppingItem(name: "maito", isDone: false, createdAt: Date(timeIntervalSince1970: 3))
-        let coffee = ShoppingItem(name: "kahvi", isDone: false, createdAt: Date(timeIntervalSince1970: 2))
-        let result = ShoppingListLogic.sorted([bread, milk, coffee])
+        let result = ShoppingListLogic.sorted([
+            item("leipä", done: true, at: 1),
+            item("maito", done: false, at: 3),
+            item("kahvi", done: false, at: 2),
+        ])
         XCTAssertEqual(result.map(\.name), ["kahvi", "maito", "leipä"])
     }
 
     func testCheckedReturnsOnlyCheckedItems() {
-        let bread = ShoppingItem(name: "leipä", isDone: true)
-        let milk  = ShoppingItem(name: "maito", isDone: false)
-        XCTAssertEqual(ShoppingListLogic.checked([bread, milk]).map(\.name), ["leipä"])
+        let result = ShoppingListLogic.checked([
+            item("leipä", done: true),
+            item("maito", done: false),
+        ])
+        XCTAssertEqual(result.map(\.name), ["leipä"])
     }
 
     func testQuantityStaysAtStartForShortDrag() {
@@ -42,5 +57,21 @@ final class ShoppingListLogicTests: XCTestCase {
     func testQuantityNeverGoesBelowOne() {
         XCTAssertEqual(ShoppingListLogic.quantity(start: 2, dragWidth: -500), 1)
         XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: -36), 1)
+    }
+
+    func testCoreDataRoundTrip() throws {
+        let container = CoreDataStack.container(inMemory: true)
+        let context = container.viewContext
+
+        let milk = CDShoppingItem(context: context)
+        milk.name = "maito"
+        milk.quantity = 3
+        try context.save()
+
+        let fetched = try context.fetch(CDShoppingItem.fetchRequest())
+        XCTAssertEqual(fetched.count, 1)
+        XCTAssertEqual(fetched.first?.name, "maito")
+        XCTAssertEqual(fetched.first?.quantity, 3)
+        XCTAssertEqual(fetched.first?.isDone, false)
     }
 }

@@ -1,5 +1,12 @@
 import Foundation
 
+/// The minimum surface the list logic needs — keeps the logic and its
+/// tests independent of the persistence framework.
+protocol ShoppingItemLike {
+    var isDone: Bool { get }
+    var createdAt: Date { get }
+}
+
 enum ShoppingListLogic {
     /// Trimmed input, or nil when nothing remains.
     static func normalized(_ raw: String) -> String? {
@@ -8,14 +15,14 @@ enum ShoppingListLogic {
     }
 
     /// Unchecked first; within each group oldest first.
-    static func sorted(_ items: [ShoppingItem]) -> [ShoppingItem] {
+    static func sorted<Item: ShoppingItemLike>(_ items: [Item]) -> [Item] {
         items.sorted {
             if $0.isDone != $1.isDone { return !$0.isDone }
             return $0.createdAt < $1.createdAt
         }
     }
 
-    static func checked(_ items: [ShoppingItem]) -> [ShoppingItem] {
+    static func checked<Item: ShoppingItemLike>(_ items: [Item]) -> [Item] {
         items.filter(\.isDone)
     }
 

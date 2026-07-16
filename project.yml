@@ -31,8 +31,9 @@ targets:
     platform: iOS
     sources:
       - OstoslistaWidget
-      - Ostoslista/ShoppingItem.swift
-      - Ostoslista/SharedStore.swift
+      - Ostoslista/CDShoppingItem.swift
+      - Ostoslista/CoreDataStack.swift
+      - Ostoslista/ShoppingListLogic.swift
     entitlements:
       path: OstoslistaWidget/OstoslistaWidget.entitlements
       properties:

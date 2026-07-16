@@ -1,14 +1,15 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct ShoppingListView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [ShoppingItem]
+    @Environment(\.managedObjectContext) private var context
+    @FetchRequest(sortDescriptors: [SortDescriptor(\CDShoppingItem.createdAt)])
+    private var items: FetchedResults<CDShoppingItem>
     @State private var newItemName = ""
     @FocusState private var inputFocused: Bool
 
-    private var sortedItems: [ShoppingItem] { ShoppingListLogic.sorted(items) }
-    private var checkedCount: Int { ShoppingListLogic.checked(items).count }
+    private var sortedItems: [CDShoppingItem] { ShoppingListLogic.sorted(Array(items)) }
+    private var checkedCount: Int { ShoppingListLogic.checked(Array(items)).count }
 
     var body: some View {
         NavigationStack {
@@ -22,7 +23,10 @@ struct ShoppingListView: View {
                 if !items.isEmpty {
                     Section {
                         ForEach(sortedItems) { item in
-                            ShoppingRowView(item: item) { item.isDone.toggle() }
+                            ShoppingRowView(item: item) {
+                                item.isDone.toggle()
+                                save()
+                            }
                         }
                         .onDelete(perform: deleteItems)
                     } header: {
@@ -42,17 +46,25 @@ struct ShoppingListView: View {
 
     private func addItem() {
         guard let name = ShoppingListLogic.normalized(newItemName) else { return }
-        modelContext.insert(ShoppingItem(name: name))
+        let item = CDShoppingItem(context: context)
+        item.name = name
+        save()
         newItemName = ""
         inputFocused = true
     }
 
     private func deleteItems(at offsets: IndexSet) {
         let current = sortedItems
-        for index in offsets { modelContext.delete(current[index]) }
+        for index in offsets { context.delete(current[index]) }
+        save()
     }
 
     private func clearChecked() {
-        for item in ShoppingListLogic.checked(items) { modelContext.delete(item) }
+        for item in ShoppingListLogic.checked(Array(items)) { context.delete(item) }
+        save()
+    }
+
+    private func save() {
+        try? context.save()
     }
 }
