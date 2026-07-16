@@ -32,6 +32,12 @@ enum ShoppingListLogic {
         max(1, start + Int(dragWidth / 36))
     }
 
+    /// Human-readable category breadcrumb, broadest category first (the
+    /// catalog returns it narrowest-first). Nil when there is no path.
+    static func categoryHint(_ path: [String]) -> String? {
+        path.isEmpty ? nil : path.reversed().joined(separator: " › ")
+    }
+
     /// Normalized key for shelf-memory lookups: the same product matches
     /// regardless of letter case and surrounding whitespace.
     static func shelfKey(_ product: String) -> String {

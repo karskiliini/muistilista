@@ -71,10 +71,20 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
 - **R23** 🔄 Tuotteen voi VALINNAISESTI lisätä kaupan kautta: hakukentän
-  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa ja tuote;
-  rivillä näkyy silloin kauppa ja hyllypaikka pienellä toisella rivillä.
-  Kauppavalinta on pudotusvalikko: tunnetut kaupat listana, uusi kauppa
-  lisätään valikon "Uusi kauppa…" -kohdasta; viimeisin valinta muistetaan. Vapaasanalisäys ei muutu eikä monimutkaistu
+  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa (pudotusvalikko;
+  tunnetut kaupat listana, uusi valikon "Uusi kauppa…" -kohdasta, viimeisin
+  muistetaan). Kun valittu kauppa on S-ryhmää, tuotenimen kirjoittaminen
+  hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
+  vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
+  Muille kaupoille (esim. K-ryhmä ennen API-avainta) käytetään
+  vapaasanalisäystä samassa lomakkeessa. Listarivillä näkyy kauppa ja
+  hyllypaikka pienellä toisella rivillä. Vapaasanalisäys päänäkymässä ei
+  muutu tästä millään tavalla.
+- **R25** ✅ Fyysistä hyllypaikkaa ("käytävä 12") ei ole saatavilla
+  mistään kaupan rajapinnasta, joten katalogista näytetään kategoria; oikea
+  hyllypaikka tulee perheen hyllymuistista (R24), joka esitäyttää ja
+  tallentaa sen käyttäjän antamana. Katalogin hinnat ovat viitteellisiä
+  (edustava S-kauppa). Vapaasanalisäys ei muutu eikä monimutkaistu
   tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
   haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
   kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)

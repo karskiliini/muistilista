@@ -68,6 +68,58 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(victims, ["a"])
     }
 
+    func testSKaupatParseExtractsProductFieldsFromRealShape() {
+        let json = """
+        {"data":{"store":{"products":{"productListItems":[
+          {"product":{
+            "id":"6414893386488","name":"Kotimaista kevytmaito 1 L",
+            "price":0.95,"priceUnit":"KPL","comparisonPrice":0.95,"comparisonUnit":"LTR",
+            "brandName":"Kotimaista",
+            "hierarchyPath":[{"name":"Maidot"},{"name":"Maidot ja piimät"},{"name":"Maito, munat ja rasvat"}],
+            "productDetails":{"productImages":{"mainImage":{"urlTemplate":"https://cdn.s-cloud.fi/v1/{MODIFIERS}/x.{EXTENSION}"}}}
+          }}
+        ]}}}}
+        """.data(using: .utf8)!
+        let products = SKaupatCatalog.parse(json)
+        XCTAssertEqual(products.count, 1)
+        let p = products[0]
+        XCTAssertEqual(p.name, "Kotimaista kevytmaito 1 L")
+        XCTAssertEqual(p.price, 0.95)
+        XCTAssertEqual(p.priceText, "0,95 €")
+        XCTAssertEqual(p.categoryPath.first, "Maidot")
+        XCTAssertEqual(p.brand, "Kotimaista")
+        XCTAssertNotNil(p.imageURL)
+        XCTAssertFalse(p.imageURL!.absoluteString.contains("{MODIFIERS}"))
+    }
+
+    func testSKaupatParseReturnsEmptyOnGarbage() {
+        XCTAssertEqual(SKaupatCatalog.parse(Data("nonsense".utf8)).count, 0)
+    }
+
+    func testSKaupatCatalogHandlesSGroupStoreNames() {
+        XCTAssertTrue(SKaupatCatalog.handles(storeName: "Prisma Kuopio"))
+        XCTAssertTrue(SKaupatCatalog.handles(storeName: "S-market Saarijärvi"))
+        XCTAssertTrue(SKaupatCatalog.handles(storeName: "ALEPA Kallio"))
+        XCTAssertFalse(SKaupatCatalog.handles(storeName: "K-Citymarket"))
+        XCTAssertFalse(SKaupatCatalog.handles(storeName: "Motonet"))
+    }
+
+    func testSKaupatSearchURLEncodesQueryAndStore() {
+        let url = SKaupatCatalog.searchURL(query: "ruis leipä", storeId: "42")
+        let s = url!.absoluteString
+        XCTAssertTrue(s.hasPrefix("https://api.s-kaupat.fi/?operationName=RemoteFilteredProducts"))
+        XCTAssertTrue(s.contains("ruis%20leip%C3%A4") || s.contains("ruis+leip%C3%A4"))
+        XCTAssertTrue(s.contains("%22storeId%22%3A%2242%22"))
+    }
+
+    func testCatalogCategoryHintJoinsBreadcrumbTopDown() {
+        XCTAssertEqual(
+            ShoppingListLogic.categoryHint(["Maidot", "Maidot ja piimät", "Maito, munat ja rasvat"]),
+            "Maito, munat ja rasvat › Maidot ja piimät › Maidot"
+        )
+        XCTAssertNil(ShoppingListLogic.categoryHint([]))
+    }
+
     func testShelfKeyNormalizesCaseAndWhitespace() {
         XCTAssertEqual(ShoppingListLogic.shelfKey("  Maito "), "maito")
         XCTAssertEqual(ShoppingListLogic.shelfKey("RUISLEIPÄ"), "ruisleipä")

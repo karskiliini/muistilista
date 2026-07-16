@@ -28,6 +28,13 @@ targets:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CKSharingSupported: true
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+          NSExceptionDomains:
+            api.s-kaupat.fi:
+              NSExceptionAllowsInsecureHTTPLoads: false
+              NSIncludesSubdomains: true
+              NSExceptionRequiresForwardSecrecy: false
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:
@@ -38,7 +45,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.8.1
+        MARKETING_VERSION: 1.9.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
