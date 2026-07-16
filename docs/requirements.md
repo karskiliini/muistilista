@@ -81,18 +81,16 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
   vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
   Muille kaupoille käytetään vapaasanalisäystä samassa lomakkeessa.
-  Kaikki kaupat, joilla on suoraan appista kutsuttava rajapinta, on
-  toteutettu ja live-varmennettu (on-device-integraatiotestit): S-ryhmä
-  (s-kaupat GraphQL), Puuilo (Algolia, avain haetaan dynaamisesti sivulta
-  koska se vanhenee) ja Tokmanni (Klevu, klusteri eucs11). Kaksi kauppaa
-  jäi aitojen esteiden taakse: **K-Rauta** on Next.js-palvelinpohjainen
-  (suora `/api/search/v2` vastaa 500 ilman tuntemattomia otsakkeita,
-  client-suodatus käyttää server-componenteja joita ei voi kaapata, ja
-  hinnat/saatavuus tulevat erillisistä kutsuista) — sitä ei voi rakentaa
-  luotettavasti eikä varmentaa, joten sitä ei toteuteta rikkinäisenä.
-  **Kesko** (K-ruokakaupat) vaatii käyttäjän ilmaisen developer.kesko.fi
-  -avaimen. Näille kahdelle käytetään vapaasanalisäystä. Vapaasanalisäys
-  päänäkymässä ei muutu tästä millään tavalla.
+  Kaikki kaupat, joilla on rakennettavissa oleva haku, on toteutettu ja
+  live-varmennettu (on-device-integraatiotestit hakevat oikeista
+  rajapinnoista): S-ryhmä (s-kaupat GraphQL), Puuilo (Algolia, avain
+  haetaan dynaamisesti sivulta koska se vanhenee), Tokmanni (Klevu,
+  klusteri eucs11) ja K-Rauta (hakusivun HTML parsitaan; sisältää oikean
+  hyllypaikan osasto+hyllynumero muodossa). Ainoa toteuttamatta jäävä on
+  **Kesko** (K-ruokakaupat), joka vaatii käyttäjän ilmaisen
+  developer.kesko.fi-avaimen — sille käytetään vapaasanalisäystä kunnes
+  avain on annettu. Vapaasanalisäys päänäkymässä ei muutu tästä millään
+  tavalla.
 - **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla

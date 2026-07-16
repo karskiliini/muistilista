@@ -159,6 +159,31 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertFalse(TokmanniCatalog.handles(storeName: "Puuilo"))
     }
 
+    func testKRautaParsesProductPriceAndShelfFromEmbeddedHTML() {
+        // Mirrors the real Next.js flight data shape: a product record, a
+        // price map keyed by EAN, and an availability entry with a real
+        // per-store shelfLocation.
+        let html = ###"""
+        {"id":6438313566311,"ean":"6438313566311","productId":"502140131","name":"Vasara PROF kirvesmiehen taottu 16oz","brand":"PROF","measurements":{},"image":"https://public.keskofiles.com/f/btt/ASSET_JPEG_24767850","images":["x"]}
+        ...prices..."6438313566311":{"ean":"6438313566311","type":"ecom","basePrice":19.95,"campaignPrice":19.95,"scales":[],"qualifier":"REGULAR","price":19.95}...
+        ...avail..."6438313566311":{"ean":"6438313566311","storeAvailabilities":[{"availability":{"status":"AVAILABLE"},"quantity":4,"shelfLocation":{"location":"Sisämyymälä","locationCode":"S","department":"Työvälineet","departmentCode":"S09","shelfNumber":"7/8","shelfModule":"Moduuli 13"}}]}...
+        """###
+        let products = KRautaCatalog.parse(html)
+        XCTAssertEqual(products.count, 1)
+        let p = products[0]
+        XCTAssertEqual(p.name, "Vasara PROF kirvesmiehen taottu 16oz")
+        XCTAssertEqual(p.price, 19.95)
+        XCTAssertEqual(p.priceText, "19,95 €")
+        XCTAssertEqual(p.brand, "PROF")
+        XCTAssertEqual(p.imageURLs.count, 1)
+        XCTAssertEqual(p.shelfLocation, "Työvälineet · hylly 7/8")
+    }
+
+    func testKRautaHandlesRautaStores() {
+        XCTAssertTrue(KRautaCatalog.handles(storeName: "K-Rauta"))
+        XCTAssertFalse(KRautaCatalog.handles(storeName: "Tokmanni"))
+    }
+
     func testSKaupatCatalogHandlesSGroupStoreNames() {
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "Prisma Kuopio"))
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "S-market Saarijärvi"))
