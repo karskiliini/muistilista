@@ -128,7 +128,35 @@ final class ShoppingListLogicTests: XCTestCase {
     func testCatalogRegistryRoutesStores() {
         XCTAssertTrue(CatalogRegistry.provider(for: "Prisma") is SKaupatCatalog)
         XCTAssertTrue(CatalogRegistry.provider(for: "Puuilo") is PuuiloCatalog)
+        XCTAssertTrue(CatalogRegistry.provider(for: "Tokmanni") is TokmanniCatalog)
         XCTAssertNil(CatalogRegistry.provider(for: "Lidl"))
+    }
+
+    func testTokmanniParseExtractsKlevuProduct() {
+        let json = """
+        {"result":[{
+          "id":"643811478006","name":"Akkuporakone CLICK 18 V","sku":"643811478006",
+          "price":"59.99","salePrice":"49.99",
+          "cloudinary_image":"https://res.cloudinary.com/tokmanni/image/upload/x.jpg",
+          "url":"https://www.tokmanni.fi/akkuporakone","category":"akkuporakoneet",
+          "item_brand_name":"brücke","shortDesc":"Kevyt akkuporakone"
+        }]}
+        """.data(using: .utf8)!
+        let products = TokmanniCatalog.parse(json)
+        XCTAssertEqual(products.count, 1)
+        let p = products[0]
+        XCTAssertEqual(p.name, "Akkuporakone CLICK 18 V")
+        XCTAssertEqual(p.price, 49.99)          // sale price wins
+        XCTAssertEqual(p.priceText, "49,99 €")
+        XCTAssertEqual(p.brand, "brücke")
+        XCTAssertEqual(p.categoryPath, ["akkuporakoneet"])
+        XCTAssertEqual(p.description, "Kevyt akkuporakone")
+        XCTAssertEqual(p.imageURLs.count, 1)
+    }
+
+    func testTokmanniHandlesOnlyTokmanni() {
+        XCTAssertTrue(TokmanniCatalog.handles(storeName: "Tokmanni"))
+        XCTAssertFalse(TokmanniCatalog.handles(storeName: "Puuilo"))
     }
 
     func testSKaupatCatalogHandlesSGroupStoreNames() {

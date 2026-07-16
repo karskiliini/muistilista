@@ -81,11 +81,13 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
   vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
   Muille kaupoille käytetään vapaasanalisäystä samassa lomakkeessa.
-  Toteutetut hakuproviderit: S-ryhmä (s-kaupat) ja Puuilo (Algolia, avain
-  haetaan dynaamisesti sivulta koska se vanhenee). Tokmanni (Klevu),
-  K-Rauta (Loop54) ja Kesko (avain) ovat providerirakenteessa mutta
-  vaativat lisäselvityksen/avaimen. Vapaasanalisäys päänäkymässä ei muutu
-  tästä millään tavalla.
+  Toteutetut ja live-varmennetut hakuproviderit: S-ryhmä (s-kaupat),
+  Puuilo (Algolia, avain haetaan dynaamisesti sivulta koska se vanhenee) ja
+  Tokmanni (Klevu, klusteri eucs11). K-Rauta vaatii monivaiheisen
+  kutsuketjun (haku + erillinen hinta + saatavuus) eikä ole vielä
+  toteutettu; Kesko (K-ruokakaupat) vaatii käyttäjän developer-avaimen.
+  Näille kahdelle käytetään vapaasanalisäystä. Vapaasanalisäys
+  päänäkymässä ei muutu tästä millään tavalla.
 - **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla

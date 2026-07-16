@@ -35,14 +35,10 @@ protocol CatalogProvider {
 /// Picks the provider for a store name, or nil when the store has no
 /// catalog yet (then the manual add path is used).
 enum CatalogRegistry {
-    private static let providers: [CatalogProvider.Type] = [
-        SKaupatCatalog.self,
-        PuuiloCatalog.self,
-    ]
-
     static func provider(for storeName: String) -> CatalogProvider? {
         if SKaupatCatalog.handles(storeName: storeName) { return SKaupatCatalog() }
         if PuuiloCatalog.handles(storeName: storeName) { return PuuiloCatalog() }
+        if TokmanniCatalog.handles(storeName: storeName) { return TokmanniCatalog() }
         return nil
     }
 }
