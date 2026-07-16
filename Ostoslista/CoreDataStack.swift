@@ -6,6 +6,9 @@ import CoreData
 /// required when NSPersistentCloudKitContainer arrives in phase 2.
 enum CoreDataStack {
     static let appGroupID = "group.fi.maaranen.ostoslista"
+    /// Marks this device's own saves in persistent history, so remote-change
+    /// banners fire only for transactions authored elsewhere.
+    static let transactionAuthor = "ostoslista-app"
 
     /// One model instance per process; multiple models claiming the same
     /// NSManagedObject subclass corrupt entity lookups.
@@ -77,6 +80,7 @@ enum CoreDataStack {
             if let error { fatalError("Cannot load store: \(error)") }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.transactionAuthor = transactionAuthor
         if cloudKit {
             container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         }

@@ -61,6 +61,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   versionumero pienellä tekstillä (semanttinen versiointi, esim. "v1.5.0").
   Versio päivitetään aina kun feature tai bugikorjaus valmistuu
   (`.claude/skills/version-bump`).
+- **R22** ✅ Kun lista muuttuu toiselta laitteelta tulleella päivityksellä,
+  laite näyttää ilmoitusbannerin (toast), joka kertoo mitä tapahtui
+  (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
+  etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
+  laitteella tehdyistä muutoksista ei ilmoiteta.
 
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 

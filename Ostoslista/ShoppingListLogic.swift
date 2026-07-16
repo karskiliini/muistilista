@@ -32,6 +32,18 @@ enum ShoppingListLogic {
         max(1, start + Int(dragWidth / 36))
     }
 
+    /// One-line summary of a remote change batch for the notification
+    /// banner, or nil when there is nothing worth announcing.
+    static func changeSummary(added: [String], updated: [String], deletedCount: Int) -> String? {
+        var parts: [String] = []
+        parts += added.map { "+ \($0)" }
+        parts += updated.map { "~ \($0)" }
+        if deletedCount > 0 {
+            parts.append(deletedCount == 1 ? "– 1 rivi" : "– \(deletedCount) riviä")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     /// Groups rows by `key`; in each group the row with the smallest
     /// `tiebreak` survives and the rest are returned for deletion. Every
     /// device computes the same survivors, so concurrent dedupe passes on

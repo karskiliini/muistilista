@@ -68,6 +68,21 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(victims, ["a"])
     }
 
+    func testChangeSummaryFormatsAllChangeKinds() {
+        XCTAssertEqual(
+            ShoppingListLogic.changeSummary(added: ["maito"], updated: ["leipä"], deletedCount: 2),
+            "+ maito · ~ leipä · – 2 riviä"
+        )
+        XCTAssertEqual(
+            ShoppingListLogic.changeSummary(added: [], updated: [], deletedCount: 1),
+            "– 1 rivi"
+        )
+    }
+
+    func testChangeSummaryReturnsNilWhenNothingChanged() {
+        XCTAssertNil(ShoppingListLogic.changeSummary(added: [], updated: [], deletedCount: 0))
+    }
+
     func testCoreDataRoundTrip() throws {
         let container = CoreDataStack.container(inMemory: true)
         let context = container.viewContext

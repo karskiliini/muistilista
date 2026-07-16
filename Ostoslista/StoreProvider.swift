@@ -13,9 +13,11 @@ final class StoreProvider: ObservableObject {
     private var isRefreshing = false
     private var activeCloudEvents: Set<UUID> = []
     private var dedupeWork: DispatchWorkItem?
+    private var remoteChangeNotifier: RemoteChangeNotifier?
 
     init() {
         container = CoreDataStack.container(cloudKit: true)
+        remoteChangeNotifier = RemoteChangeNotifier(container: container)
 
         NotificationCenter.default.addObserver(
             forName: PushDelegate.pushReceived, object: nil, queue: .main
