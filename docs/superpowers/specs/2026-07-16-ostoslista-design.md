@@ -66,15 +66,17 @@ Single-target SwiftUI app plus a unit-test target.
 
 ## Feature: drag-to-set quantity (added 2026-07-16, user-approved)
 
-Dragging a row rightward scrubs a quantity: a blue "× N" capsule appears
-and N grows one step per 36 pt of horizontal drag, starting from the
-item's current quantity. Dragging back left within the same gesture
-lowers it; minimum 1. Lifting the finger commits. When quantity > 1 the
-row permanently shows a secondary "× N" at its trailing edge; quantity 1
-shows nothing. Model gains `quantity: Int = 1` (SwiftData lightweight
-migration). Mapping lives in `ShoppingListLogic.quantity(start:dragWidth:)`
-(unit-tested). Drags that begin leftward or mostly vertical are ignored so
-swipe-to-delete and scrolling keep working.
+Unchecked rows show a drag bar at the trailing edge: a "× N" pill with a
+left-right arrow (dimmed when N = 1). Scrubbing the pill horizontally sets
+the quantity — one step per 36 pt in either direction, starting from the
+item's current quantity, minimum 1; lifting the finger commits. During the
+scrub the pill turns blue and enlarges. The gesture lives only on the pill
+(user feedback 2026-07-16: middle of the row stays free for tap-to-toggle,
+swipe-to-delete, and scrolling; a whole-row gesture was hard to discover).
+Checked rows cannot scrub; they show a plain secondary "× N" when N > 1.
+Model gains `quantity: Int = 1` (SwiftData lightweight migration). Mapping
+lives in `ShoppingListLogic.quantity(start:dragWidth:)` (unit-tested).
+Mostly-vertical drags on the pill are ignored so scrolling still works.
 
 ## Out of scope (YAGNI)
 
