@@ -48,7 +48,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   listaa synkaten.
 - **R15** 📋 Sovellus jaellaan perheen puhelimiin TestFlightin kautta.
 - **R19** ✅ Listan voi pakottaa päivittymään vetämällä listaa alaspäin
-  (pull-to-refresh).
+  (pull-to-refresh). Päivityksen valmistuttua lista palaa paikalleen
+  pehmeästi animoiden — myös sormen ollessa yhä alhaalla — eikä koskaan
+  hyppää; vieritysasento säilyy. Päivityksen voi käynnistää myös
+  työkalurivin päivityspainikkeesta ja näppäimistöllä ⌘R (Macin
+  ensisijainen tapa).
 
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 

@@ -40,6 +40,14 @@ struct ShoppingListView: View {
                 await store.forceRefresh()
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        Task { await store.forceRefresh() }
+                    } label: {
+                        Label("Päivitä", systemImage: "arrow.clockwise")
+                    }
+                    .keyboardShortcut("r", modifiers: .command)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Tyhjennä ostetut", action: clearChecked)
                         .disabled(checkedCount == 0)

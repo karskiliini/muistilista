@@ -3,6 +3,7 @@ import WidgetKit
 
 @main
 struct OstoslistaApp: App {
+    @UIApplicationDelegateAdaptor(PushDelegate.self) private var pushDelegate
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var store = StoreProvider()
 
@@ -11,7 +12,6 @@ struct OstoslistaApp: App {
             ShoppingListView()
                 .environment(\.managedObjectContext, store.container.viewContext)
                 .environmentObject(store)
-                .id(store.generation)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background || phase == .inactive {
