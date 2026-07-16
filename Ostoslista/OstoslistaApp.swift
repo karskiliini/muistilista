@@ -4,13 +4,14 @@ import WidgetKit
 @main
 struct OstoslistaApp: App {
     @Environment(\.scenePhase) private var scenePhase
-
-    private let container = CoreDataStack.container(cloudKit: true)
+    @StateObject private var store = StoreProvider()
 
     var body: some Scene {
         WindowGroup {
             ShoppingListView()
-                .environment(\.managedObjectContext, container.viewContext)
+                .environment(\.managedObjectContext, store.container.viewContext)
+                .environmentObject(store)
+                .id(store.generation)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background || phase == .inactive {

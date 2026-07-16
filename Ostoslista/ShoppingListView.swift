@@ -3,6 +3,7 @@ import CoreData
 
 struct ShoppingListView: View {
     @Environment(\.managedObjectContext) private var context
+    @EnvironmentObject private var store: StoreProvider
     @FetchRequest(sortDescriptors: [SortDescriptor(\CDShoppingItem.createdAt)])
     private var items: FetchedResults<CDShoppingItem>
     @State private var newItemName = ""
@@ -35,6 +36,9 @@ struct ShoppingListView: View {
                 }
             }
             .navigationTitle("Ostoslista")
+            .refreshable {
+                await store.forceRefresh()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Tyhjennä ostetut", action: clearChecked)

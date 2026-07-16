@@ -22,12 +22,20 @@ targets:
         com.apple.developer.icloud-services:
           - CloudKit
         aps-environment: development
+    info:
+      path: Ostoslista/Info.plist
+      properties:
+        CFBundleDisplayName: Ostoslista
+        UILaunchScreen: {}
+        UIBackgroundModes: [remote-notification]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_UIBackgroundModes: remote-notification
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"

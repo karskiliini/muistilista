@@ -38,7 +38,8 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ostettavana olevien (ruksaamattomien) tuotteiden määrän. Se päivittyy kun
   sovellus siirtyy taustalle, ja vähintään 30 minuutin välein.
 - **R12** ✅ Lista synkkautuu käyttäjän omien laitteiden välillä hänen
-  iCloud-tilinsä kautta.
+  iCloud-tilinsä kautta. Muutokset saapuvat automaattisesti hiljaisella
+  push-ilmoituksella — laite päivittää itsensä ilman käyttäjän toimia.
 - **R13** 🔄 Listan voi jakaa perheenjäsenille, joilla on omat Apple ID:t,
   ja kaikki osapuolet voivat lisätä, ruksata, säätää ja poistaa rivejä
   samasta listasta. (iCloud/CKShare-jako; kutsu sovelluksen jakonapista.)
@@ -46,6 +47,8 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   kirjoittamiseen ja monilaiteympäristön testaamiseen) sekä iPadilla, samaa
   listaa synkaten.
 - **R15** 📋 Sovellus jaellaan perheen puhelimiin TestFlightin kautta.
+- **R19** ✅ Listan voi pakottaa päivittymään vetämällä listaa alaspäin
+  (pull-to-refresh).
 
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 
