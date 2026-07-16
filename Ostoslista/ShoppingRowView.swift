@@ -40,6 +40,8 @@ struct ShoppingRowView: View {
     private var quantityDrag: some Gesture {
         DragGesture(minimumDistance: 25)
             .onChanged { value in
+                // Checked items keep their final quantity — no scrubbing.
+                guard !item.isDone else { return }
                 // Activate only on a drag that starts rightward and mostly
                 // horizontal, so swipe-to-delete and scrolling still win.
                 if dragQuantity == nil {
