@@ -71,9 +71,10 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
 - **R23** 🔄 Tuotteen voi VALINNAISESTI lisätä kaupan kautta: hakukentän
-  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa (viimeisin
-  muistetaan) ja tuote; rivillä näkyy silloin kauppa ja hyllypaikka
-  pienellä toisella rivillä. Vapaasanalisäys ei muutu eikä monimutkaistu
+  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa ja tuote;
+  rivillä näkyy silloin kauppa ja hyllypaikka pienellä toisella rivillä.
+  Kauppavalinta on pudotusvalikko: tunnetut kaupat listana, uusi kauppa
+  lisätään valikon "Uusi kauppa…" -kohdasta; viimeisin valinta muistetaan. Vapaasanalisäys ei muutu eikä monimutkaistu
   tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
   haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
   kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)

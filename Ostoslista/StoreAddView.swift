@@ -15,17 +15,28 @@ struct StoreAddView: View {
     @State private var shelf = ""
     @State private var shelfWasRecalled = false
     @State private var addedCount = 0
+    @State private var newStorePromptShown = false
+    @State private var newStoreName = ""
     @FocusState private var productFocused: Bool
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Kauppa") {
-                    TextField("Kaupan nimi (esim. K-CM Kuopio)", text: $storeName)
-                    let suggestions = store.knownStores().filter { $0 != storeName }
-                    if storeName.isEmpty && !suggestions.isEmpty {
-                        ForEach(suggestions.prefix(4), id: \.self) { name in
+                    Menu {
+                        ForEach(storeChoices, id: \.self) { name in
                             Button(name) { storeName = name }
+                        }
+                        if !storeChoices.isEmpty { Divider() }
+                        Button("Uusi kauppa…") { newStorePromptShown = true }
+                    } label: {
+                        HStack {
+                            Text(storeName.isEmpty ? "Valitse kauppa" : storeName)
+                                .foregroundStyle(storeName.isEmpty ? .secondary : .primary)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -61,7 +72,26 @@ struct StoreAddView: View {
                     Button("Valmis") { dismiss() }
                 }
             }
+            .alert("Uusi kauppa", isPresented: $newStorePromptShown) {
+                TextField("Kaupan nimi (esim. K-CM Kuopio)", text: $newStoreName)
+                Button("Valitse") {
+                    if let name = ShoppingListLogic.normalized(newStoreName) {
+                        storeName = name
+                    }
+                    newStoreName = ""
+                }
+                Button("Peruuta", role: .cancel) { newStoreName = "" }
+            }
         }
+    }
+
+    /// Dropdown contents: the current store first, then other known ones.
+    private var storeChoices: [String] {
+        var names = store.knownStores()
+        if !storeName.isEmpty && !names.contains(storeName) {
+            names.insert(storeName, at: 0)
+        }
+        return names
     }
 
     private func recallShelfIfKnown(for product: String) {
