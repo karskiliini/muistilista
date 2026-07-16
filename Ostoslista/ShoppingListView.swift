@@ -22,15 +22,7 @@ struct ShoppingListView: View {
                 if !items.isEmpty {
                     Section {
                         ForEach(sortedItems) { item in
-                            HStack(spacing: 12) {
-                                Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(item.isDone ? Color.green : Color.secondary)
-                                Text(item.name)
-                                    .strikethrough(item.isDone)
-                                    .foregroundStyle(item.isDone ? .secondary : .primary)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture { item.isDone.toggle() }
+                            ShoppingRowView(item: item) { item.isDone.toggle() }
                         }
                         .onDelete(perform: deleteItems)
                     } header: {
