@@ -52,7 +52,15 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   pehmeästi animoiden — myös sormen ollessa yhä alhaalla — eikä koskaan
   hyppää; vieritysasento säilyy. Päivityksen voi käynnistää myös
   työkalurivin päivityspainikkeesta ja näppäimistöllä ⌘R (Macin
-  ensisijainen tapa).
+  ensisijainen tapa). Macissa lista päivittyy automaattisesti lisäksi
+  minuutin välein ajettavalla varmistushaulla.
+- **R20** ✅ Synkka ei koskaan monista rivejä pysyvästi: kahdentuneet
+  tietueet siivotaan automaattisesti, ja kaikki laitteet päätyvät samaan
+  lopputulokseen (deterministinen säilyjän valinta).
+- **R21** ✅ Sovelluksen päänäkymän oikeassa alakulmassa näkyy aina
+  versionumero pienellä tekstillä (semanttinen versiointi, esim. "v1.5.0").
+  Versio päivitetään aina kun feature tai bugikorjaus valmistuu
+  (`.claude/skills/version-bump`).
 
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 

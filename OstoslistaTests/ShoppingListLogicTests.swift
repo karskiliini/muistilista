@@ -59,6 +59,15 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: -36), 1)
     }
 
+    func testDuplicatesToDeleteKeepsSmallestTiebreakPerGroup() {
+        let victims = ShoppingListLogic.duplicatesToDelete([
+            (id: "a", key: "k1", tiebreak: "B"),
+            (id: "b", key: "k1", tiebreak: "A"),
+            (id: "c", key: "k2", tiebreak: "Z"),
+        ])
+        XCTAssertEqual(victims, ["a"])
+    }
+
     func testCoreDataRoundTrip() throws {
         let container = CoreDataStack.container(inMemory: true)
         let context = container.viewContext

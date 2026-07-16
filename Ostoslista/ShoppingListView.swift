@@ -36,6 +36,13 @@ struct ShoppingListView: View {
                 }
             }
             .navigationTitle("Ostoslista")
+            .overlay(alignment: .bottomTrailing) {
+                Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 2)
+            }
             .refreshable {
                 await store.forceRefresh()
             }

@@ -26,6 +26,7 @@ targets:
       path: Ostoslista/Info.plist
       properties:
         CFBundleDisplayName: Ostoslista
+        CFBundleShortVersionString: $(MARKETING_VERSION)
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:
@@ -36,6 +37,8 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
+        MARKETING_VERSION: 1.5.0
+        CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"

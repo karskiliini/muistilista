@@ -31,4 +31,26 @@ enum ShoppingListLogic {
     static func quantity(start: Int, dragWidth: CGFloat) -> Int {
         max(1, start + Int(dragWidth / 36))
     }
+
+    /// Groups rows by `key`; in each group the row with the smallest
+    /// `tiebreak` survives and the rest are returned for deletion. Every
+    /// device computes the same survivors, so concurrent dedupe passes on
+    /// different devices cannot wipe out both copies.
+    static func duplicatesToDelete<ID>(_ rows: [(id: ID, key: String, tiebreak: String)]) -> [ID] {
+        var winners: [String: (id: ID, tiebreak: String)] = [:]
+        var victims: [ID] = []
+        for row in rows {
+            if let current = winners[row.key] {
+                if row.tiebreak < current.tiebreak {
+                    victims.append(current.id)
+                    winners[row.key] = (row.id, row.tiebreak)
+                } else {
+                    victims.append(row.id)
+                }
+            } else {
+                winners[row.key] = (row.id, row.tiebreak)
+            }
+        }
+        return victims
+    }
 }

@@ -34,7 +34,14 @@ enum CoreDataStack {
         quantity.attributeType = .integer64AttributeType
         quantity.defaultValue = 1
 
-        entity.properties = [name, isDone, createdAt, quantity]
+        // Stable identity for cross-device dedupe (CloudKit has no
+        // uniqueness constraints). Optional so old rows migrate cleanly.
+        let uuid = NSAttributeDescription()
+        uuid.name = "uuid"
+        uuid.attributeType = .UUIDAttributeType
+        uuid.isOptional = true
+
+        entity.properties = [name, isDone, createdAt, quantity, uuid]
 
         let model = NSManagedObjectModel()
         model.entities = [entity]
