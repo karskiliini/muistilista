@@ -12,6 +12,9 @@ struct CatalogProduct: Identifiable, Hashable {
     let categoryPath: [String]
     let brand: String?
     let imageURL: URL?
+    /// Real shelf/aisle location when the chain publishes one (Motonet,
+    /// hardware stores); nil for grocery chains that don't.
+    var shelfLocation: String? = nil
 
     var priceText: String? {
         guard let price else { return nil }

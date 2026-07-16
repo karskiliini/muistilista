@@ -15,8 +15,6 @@ struct StoreAddView: View {
     @State private var shelf = ""
     @State private var shelfWasRecalled = false
     @State private var addedCount = 0
-    @State private var newStorePromptShown = false
-    @State private var newStoreName = ""
     @State private var results: [CatalogProduct] = []
     @State private var searching = false
     @State private var searchTask: Task<Void, Never>?
@@ -39,25 +37,19 @@ struct StoreAddView: View {
                     Button("Valmis") { dismiss() }
                 }
             }
-            .alert("Uusi kauppa", isPresented: $newStorePromptShown) {
-                TextField("Kaupan nimi (esim. Prisma Kuopio)", text: $newStoreName)
-                Button("Valitse") {
-                    if let name = ShoppingListLogic.normalized(newStoreName) { storeName = name }
-                    newStoreName = ""
-                }
-                Button("Peruuta", role: .cancel) { newStoreName = "" }
-            }
         }
     }
 
     private var storeSection: some View {
         Section("Kauppa") {
             Menu {
-                ForEach(storeChoices, id: \.self) { name in
-                    Button(name) { storeName = name; onStoreOrQueryChanged() }
+                ForEach(Stores.groups) { group in
+                    Section(group.name) {
+                        ForEach(group.stores, id: \.self) { name in
+                            Button(name) { storeName = name; onStoreOrQueryChanged() }
+                        }
+                    }
                 }
-                if !storeChoices.isEmpty { Divider() }
-                Button("Uusi kauppa…") { newStorePromptShown = true }
             } label: {
                 HStack {
                     Text(storeName.isEmpty ? "Valitse kauppa" : storeName)
@@ -117,12 +109,6 @@ struct StoreAddView: View {
 
     // MARK: - Behavior
 
-    private var storeChoices: [String] {
-        var names = store.knownStores()
-        if !storeName.isEmpty && !names.contains(storeName) { names.insert(storeName, at: 0) }
-        return names
-    }
-
     /// Debounced catalog search + shelf recall whenever store or query changes.
     private func onStoreOrQueryChanged() {
         recallShelfIfKnown(for: productName)
@@ -152,8 +138,11 @@ struct StoreAddView: View {
     }
 
     private func addCatalog(_ product: CatalogProduct) {
-        insert(name: product.name,
-               shelfHint: shelf.isEmpty ? ShoppingListLogic.categoryHint(product.categoryPath) : shelf)
+        // Real shelf from the chain wins; else the shelf the user typed;
+        // else the category breadcrumb as a coarse hint.
+        let shelfHint = product.shelfLocation
+            ?? (shelf.isEmpty ? ShoppingListLogic.categoryHint(product.categoryPath) : shelf)
+        insert(name: product.name, shelfHint: shelfHint)
     }
 
     private func addManual() {
@@ -193,7 +182,10 @@ private struct CatalogRow: View {
             .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.name).font(.subheadline)
-                if let hint = ShoppingListLogic.categoryHint(product.categoryPath) {
+                if let shelf = product.shelfLocation {
+                    Label(shelf, systemImage: "mappin.and.ellipse")
+                        .font(.caption2).foregroundStyle(.tint).lineLimit(1)
+                } else if let hint = ShoppingListLogic.categoryHint(product.categoryPath) {
                     Text(hint).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                 }
             }

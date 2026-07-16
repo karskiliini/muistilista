@@ -71,20 +71,22 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
 - **R23** 🔄 Tuotteen voi VALINNAISESTI lisätä kaupan kautta: hakukentän
-  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa (pudotusvalikko;
-  tunnetut kaupat listana, uusi valikon "Uusi kauppa…" -kohdasta, viimeisin
-  muistetaan). Kun valittu kauppa on S-ryhmää, tuotenimen kirjoittaminen
+  oikeassa laidassa on kauppa-nappi, josta valitaan kauppa. Kauppavalinta on
+  pudotusvalikko kiinteästä, ryhmitellystä listasta tuettuja kauppoja
+  (S-ryhmä, K-ryhmä, muut) — käyttäjä ei voi lisätä omia kauppoja. Viimeisin
+  valinta muistetaan. Kun valittu kauppa on S-ryhmää, tuotenimen kirjoittaminen
   hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
   vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
   Muille kaupoille (esim. K-ryhmä ennen API-avainta) käytetään
   vapaasanalisäystä samassa lomakkeessa. Listarivillä näkyy kauppa ja
   hyllypaikka pienellä toisella rivillä. Vapaasanalisäys päänäkymässä ei
   muutu tästä millään tavalla.
-- **R25** ✅ Fyysistä hyllypaikkaa ("käytävä 12") ei ole saatavilla
-  mistään kaupan rajapinnasta, joten katalogista näytetään kategoria; oikea
-  hyllypaikka tulee perheen hyllymuistista (R24), joka esitäyttää ja
-  tallentaa sen käyttäjän antamana. Katalogin hinnat ovat viitteellisiä
-  (edustava S-kauppa). Vapaasanalisäys ei muutu eikä monimutkaistu
+- **R25** 🔄 Hyllypaikan lähde riippuu kaupasta: ne kaupat jotka tarjoavat
+  hyllypaikan rajapinnassaan (esim. Motonet, rautakaupat), näyttävät sen
+  suoraan katalogituloksessa ja tallentavat sen riville. Ne jotka eivät
+  tarjoa (ruokakaupat S/Kesko), näyttävät kategorian, ja oikea hyllypaikka
+  tulee perheen hyllymuistista (R24). Ruokakatalogin hinnat ovat
+  viitteellisiä (edustava kauppa). Vapaasanalisäys ei muutu eikä monimutkaistu
   tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
   haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
   kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)
