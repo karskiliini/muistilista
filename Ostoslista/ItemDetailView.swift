@@ -7,6 +7,12 @@ struct ItemDetailView: View {
     @ObservedObject var item: CDShoppingItem
     @Environment(\.dismiss) private var dismiss
 
+    private var quantityBinding: Binding<Int> {
+        Binding(
+            get: { Int(item.quantity) },
+            set: { item.quantity = Int64($0); try? item.managedObjectContext?.save() })
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -27,7 +33,7 @@ struct ItemDetailView: View {
                     if let shelf = item.shelfLocation, !shelf.isEmpty {
                         LabeledContent("Hyllypaikka", value: shelf)
                     }
-                    LabeledContent("Määrä", value: "\(item.quantity)")
+                    Stepper("Määrä: \(item.quantity)", value: quantityBinding, in: 1...99)
                 }
                 if let desc = item.productDescription, !desc.isEmpty {
                     Section("Kuvaus") { Text(desc) }
@@ -46,12 +52,10 @@ struct ItemDetailView: View {
     private var imageStrip: some View {
         TabView {
             ForEach(item.imageURLs, id: \.self) { url in
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image): image.resizable().scaledToFit()
-                    case .failure: Image(systemName: "photo").foregroundStyle(.quaternary)
-                    default: ProgressView()
-                    }
+                CachedAsyncImage(url: url) { image in
+                    image.resizable().scaledToFit()
+                } placeholder: {
+                    ProgressView()
                 }
                 .padding()
             }

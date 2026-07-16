@@ -28,11 +28,6 @@ targets:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CKSharingSupported: true
-        NSAppTransportSecurity:
-          # Store catalog search hits several third-party HTTPS endpoints
-          # (s-kaupat, Algolia, Puuilo, …). All are TLS; arbitrary loads
-          # keeps every chain reachable without per-host exceptions.
-          NSAllowsArbitraryLoads: true
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:
@@ -43,7 +38,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.10.0
+        MARKETING_VERSION: 1.11.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"

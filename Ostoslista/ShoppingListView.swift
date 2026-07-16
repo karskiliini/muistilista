@@ -13,6 +13,13 @@ struct ShoppingListView: View {
     @State private var shareContainer: CKContainer?
     @State private var sharePresented = false
     @State private var storeAddPresented = false
+    @State private var isRefreshing = false
+    @State private var isSharing = false
+    @State private var shareError: String?
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+    }
 
     private var sortedItems: [CDShoppingItem] { ShoppingListLogic.sorted(Array(items)) }
     private var checkedCount: Int { ShoppingListLogic.checked(Array(items)).count }
@@ -29,8 +36,10 @@ struct ShoppingListView: View {
                         Button {
                             storeAddPresented = true
                         } label: {
-                            Label("Kauppa", systemImage: "storefront")
+                            Label("Hae kaupasta", systemImage: "storefront")
                                 .labelStyle(.iconOnly)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
                     }
@@ -49,38 +58,78 @@ struct ShoppingListView: View {
                     }
                 }
             }
+            .overlay {
+                if items.isEmpty {
+                    ContentUnavailableView(
+                        "Lista on tyhjä",
+                        systemImage: "cart",
+                        description: Text("Lisää tuote yltä kirjoittamalla, tai hae kaupasta \(Image(systemName: "storefront")) -painikkeella."))
+                    .allowsHitTesting(false)
+                }
+            }
             .navigationTitle("Ostoslista")
-            .overlay(alignment: .bottomTrailing) {
-                Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 2)
+            // Version pinned bottom-right without floating over rows: the
+            // inset reserves its own strip so content never sits behind it.
+            .safeAreaInset(edge: .bottom) {
+                HStack {
+                    Spacer()
+                    Text("v\(appVersion)")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 2)
             }
             .refreshable {
                 await store.forceRefresh()
             }
+            .alert("Jakaminen epäonnistui", isPresented: .constant(shareError != nil)) {
+                Button("OK") { shareError = nil }
+            } message: {
+                Text(shareError ?? "")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        Task { await store.forceRefresh() }
+                        guard !isRefreshing else { return }
+                        Task {
+                            isRefreshing = true
+                            await store.forceRefresh()
+                            isRefreshing = false
+                        }
                     } label: {
-                        Label("Päivitä", systemImage: "arrow.clockwise")
+                        if isRefreshing {
+                            ProgressView()
+                        } else {
+                            Label("Päivitä", systemImage: "arrow.clockwise")
+                        }
                     }
+                    .disabled(isRefreshing)
                     .keyboardShortcut("r", modifiers: .command)
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
+                        guard !isSharing else { return }
                         Task {
-                            if let (share, container) = try? await store.fetchOrCreateShare() {
+                            isSharing = true
+                            defer { isSharing = false }
+                            do {
+                                let (share, container) = try await store.fetchOrCreateShare()
                                 activeShare = share
                                 shareContainer = container
                                 sharePresented = true
+                            } catch {
+                                shareError = error.localizedDescription
                             }
                         }
                     } label: {
-                        Label("Jaa perheelle", systemImage: "person.crop.circle.badge.plus")
+                        if isSharing {
+                            ProgressView()
+                        } else {
+                            Label("Jaa perheelle", systemImage: "person.crop.circle.badge.plus")
+                        }
                     }
+                    .disabled(isSharing)
                     Button("Tyhjennä ostetut", action: clearChecked)
                         .disabled(checkedCount == 0)
                 }

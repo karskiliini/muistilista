@@ -14,6 +14,7 @@ struct StoreAddView: View {
     @State private var productName = ""
     @State private var shelf = ""
     @State private var shelfWasRecalled = false
+    @State private var recalledShelfValue = ""
     @State private var addedCount = 0
     @State private var results: [CatalogProduct] = []
     @State private var searching = false
@@ -69,8 +70,17 @@ struct StoreAddView: View {
                 .onChange(of: productName) { _, _ in onStoreOrQueryChanged() }
             HStack {
                 TextField("Hyllypaikka (valinnainen)", text: $shelf)
+                    .onChange(of: shelf) { _, new in
+                        // A hand edit (value differs from what recall filled
+                        // in) means it's no longer the remembered value.
+                        if shelfWasRecalled && new != recalledShelfValue {
+                            shelfWasRecalled = false
+                        }
+                    }
                 if shelfWasRecalled {
-                    Image(systemName: "brain").foregroundStyle(.tint)
+                    Image(systemName: "brain")
+                        .foregroundStyle(.tint)
+                        .accessibilityLabel("Perheen hyllymuistista")
                 }
             }
         }
@@ -133,6 +143,7 @@ struct StoreAddView: View {
             if shelfWasRecalled { shelf = ""; shelfWasRecalled = false }
             return
         }
+        recalledShelfValue = known
         shelf = known
         shelfWasRecalled = true
     }
@@ -178,7 +189,7 @@ private struct CatalogRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: product.imageURL) { image in
+            CachedAsyncImage(url: product.imageURL) { image in
                 image.resizable().scaledToFit()
             } placeholder: {
                 Image(systemName: "photo").foregroundStyle(.quaternary)

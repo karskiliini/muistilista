@@ -32,6 +32,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   lukema kasvaa yhden askeleen per 36 pt vaakavetoa ja pienenee samassa
   vedossa vasemmalle palattaessa, minimi 1. Sormen nosto tallentaa. Ostetun
   rivin määrää ei voi säätää. Levossa rivi näyttää "× N" kun N > 1.
+  Määrää voi säätää myös vetoeleen ulkopuolella: rivin pitkä painallus
+  avaa valikon (lisää/vähennä), tuotenäkymässä on askellin, ja VoiceOver
+  säätää määrää pyyhkäisemällä (saavutettava vaihtoehto eleelle).
 - **R10** ✅ Lista säilyy laitteella sovelluksen sulkemisen ja
   uudelleenkäynnistyksen yli.
 - **R11** ✅ iOS-etusivulle on tarjolla pieni widget, joka näyttää

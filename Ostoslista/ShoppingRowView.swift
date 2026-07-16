@@ -20,19 +20,16 @@ struct ShoppingRowView: View {
         HStack(spacing: 12) {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
-            if item.isFromStore, let thumb = item.imageURLs.first {
-                AsyncImage(url: thumb) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: {
-                    Image(systemName: "photo").font(.caption).foregroundStyle(.quaternary)
-                }
-                .frame(width: 32, height: 32)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            // Store items reserve a fixed leading slot so their names align
+            // whether or not an image loaded.
+            if item.isFromStore {
+                thumbnail.frame(width: 32, height: 32)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
                     .strikethrough(item.isDone)
                     .foregroundStyle(item.isDone ? .secondary : .primary)
+                    .lineLimit(2)
                 if let subtitle = storeSubtitle {
                     Text(subtitle)
                         .font(.caption2)
@@ -40,7 +37,7 @@ struct ShoppingRowView: View {
                         .lineLimit(1)
                 }
             }
-            Spacer()
+            Spacer(minLength: 8)
             if let price = item.catalogPrice, !price.isEmpty, !isScrubbing {
                 Text(price)
                     .font(.subheadline.monospacedDigit())
@@ -52,7 +49,7 @@ struct ShoppingRowView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(Color.blue, in: Capsule())
+                    .background(Color.accentColor, in: Capsule())
                     .scaleEffect(1.25, anchor: .trailing)
             } else if item.quantity > 1 {
                 Text("× \(item.quantity)")
@@ -63,6 +60,8 @@ struct ShoppingRowView: View {
                 Button { showingDetail = true } label: {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.tint)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Tuotetiedot")
@@ -78,6 +77,42 @@ struct ShoppingRowView: View {
         .onTapGesture(perform: onToggle)
         .simultaneousGesture(quantityDrag)
         .sheet(isPresented: $showingDetail) { ItemDetailView(item: item) }
+        // Discoverable, non-gesture way to change quantity (also covers
+        // Switch Control users who can't perform the drag).
+        .contextMenu {
+            Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
+            Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
+                .disabled(item.quantity <= 1)
+        }
+        // VoiceOver: swipe up/down adjusts quantity.
+        .accessibilityValue(item.quantity > 1 ? "\(item.quantity) kappaletta" : "")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: changeQuantity(+1)
+            case .decrement: changeQuantity(-1)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var thumbnail: some View {
+        Group {
+            if let url = item.imageURLs.first {
+                CachedAsyncImage(url: url) { image in
+                    image.resizable().scaledToFit()
+                } placeholder: {
+                    Image(systemName: "photo").font(.caption).foregroundStyle(.quaternary)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            } else {
+                Image(systemName: "bag").font(.caption).foregroundStyle(.quaternary)
+            }
+        }
+    }
+
+    private func changeQuantity(_ delta: Int) {
+        item.quantity = Int64(max(1, Int(item.quantity) + delta))
+        try? item.managedObjectContext?.save()
     }
 
     private var quantityDrag: some Gesture {
