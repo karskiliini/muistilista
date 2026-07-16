@@ -8,8 +8,15 @@ import SwiftUI
 /// mid-export once duplicated records, so a refresh now waits for CloudKit
 /// quiescence first, and a deterministic dedupe pass cleans up any
 /// duplicates that still slip through.
+/// Global access point for delegate callbacks (share acceptance) that have
+/// no path to the SwiftUI environment.
+enum AppStores {
+    static weak var provider: StoreProvider?
+}
+
 final class StoreProvider: ObservableObject {
     let container: NSPersistentContainer
+    @Published private(set) var currentList: CDShoppingList?
     private var isRefreshing = false
     private var activeCloudEvents: Set<UUID> = []
     private var dedupeWork: DispatchWorkItem?
@@ -18,6 +25,8 @@ final class StoreProvider: ObservableObject {
     init() {
         container = CoreDataStack.container(cloudKit: true)
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
+        AppStores.provider = self
+        Task { @MainActor in self.ensureList() }
 
         NotificationCenter.default.addObserver(
             forName: PushDelegate.pushReceived, object: nil, queue: .main
@@ -80,6 +89,68 @@ final class StoreProvider: ObservableObject {
         activeCloudEvents.removeAll()
         container.loadPersistentStores { _, error in
             if let error { assertionFailure("Store reload failed: \(error)") }
+        }
+        ensureList()
+    }
+
+    // MARK: - List resolution and sharing
+
+    private var sharedStore: NSPersistentStore? {
+        container.persistentStoreCoordinator.persistentStores
+            .first { $0.url?.lastPathComponent.contains("shared") == true }
+    }
+
+    /// The single list this device works on. A list living in the shared
+    /// store wins (family member case); otherwise the own private list is
+    /// used or created. Orphan items from older versions are adopted.
+    @MainActor
+    func ensureList() {
+        let context = container.viewContext
+        let lists = (try? context.fetch(CDShoppingList.fetchRequest())) ?? []
+        let resolved = lists.first { $0.objectID.persistentStore == sharedStore }
+            ?? lists.sorted { $0.createdAt < $1.createdAt }.first
+        let list: CDShoppingList
+        if let resolved {
+            list = resolved
+        } else {
+            list = CDShoppingList(context: context)
+            list.name = "Ostoslista"
+        }
+        let items = (try? context.fetch(CDShoppingItem.fetchRequest())) ?? []
+        for item in items
+        where item.list == nil && item.objectID.persistentStore == list.objectID.persistentStore {
+            item.list = list
+        }
+        if context.hasChanges { try? context.save() }
+        currentList = list
+    }
+
+    /// Existing CKShare for the list, or a new one (moves the hierarchy
+    /// into a shared CloudKit zone).
+    @MainActor
+    func fetchOrCreateShare() async throws -> (CKShare, CKContainer) {
+        guard let ck = container as? NSPersistentCloudKitContainer,
+              let list = currentList else {
+            throw CocoaError(.persistentStoreOperation)
+        }
+        let ckContainer = CKContainer(identifier: CoreDataStack.cloudKitContainerID)
+        if let share = try? ck.fetchShares(matching: [list.objectID])[list.objectID] {
+            return (share, ckContainer)
+        }
+        let (_, share, shareContainer) = try await ck.share([list], to: nil)
+        share[CKShare.SystemFieldKey.title] = "Ostoslista" as CKRecordValue
+        return (share, shareContainer)
+    }
+
+    /// Called when the user accepts a share invitation (family member side).
+    func acceptShare(metadata: CKShare.Metadata) {
+        guard let ck = container as? NSPersistentCloudKitContainer,
+              let sharedStore else { return }
+        ck.acceptShareInvitations(from: [metadata], into: sharedStore) { _, error in
+            if let error { print("Share accept failed: \(error)") }
+            Task { @MainActor in
+                await self.forceRefresh()
+            }
         }
     }
 

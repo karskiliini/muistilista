@@ -1,4 +1,5 @@
 import CoreData
+import CloudKit
 
 /// Core Data stack with a programmatic model (no .xcdatamodeld) and the
 /// store in the shared App Group so the app and widget read the same
@@ -44,10 +45,45 @@ enum CoreDataStack {
         uuid.attributeType = .UUIDAttributeType
         uuid.isOptional = true
 
-        entity.properties = [name, isDone, createdAt, quantity, uuid]
+        let listEntity = NSEntityDescription()
+        listEntity.name = "CDShoppingList"
+        listEntity.managedObjectClassName = "CDShoppingList"
+
+        let listName = NSAttributeDescription()
+        listName.name = "name"
+        listName.attributeType = .stringAttributeType
+        listName.defaultValue = "Ostoslista"
+
+        let listCreatedAt = NSAttributeDescription()
+        listCreatedAt.name = "createdAt"
+        listCreatedAt.attributeType = .dateAttributeType
+        listCreatedAt.defaultValue = Date(timeIntervalSince1970: 0)
+
+        // CloudKit requires optional, unordered relationships.
+        let itemsRel = NSRelationshipDescription()
+        itemsRel.name = "items"
+        itemsRel.destinationEntity = entity
+        itemsRel.minCount = 0
+        itemsRel.maxCount = 0
+        itemsRel.isOptional = true
+        itemsRel.deleteRule = .cascadeDeleteRule
+
+        let listRel = NSRelationshipDescription()
+        listRel.name = "list"
+        listRel.destinationEntity = listEntity
+        listRel.minCount = 0
+        listRel.maxCount = 1
+        listRel.isOptional = true
+        listRel.deleteRule = .nullifyDeleteRule
+
+        itemsRel.inverseRelationship = listRel
+        listRel.inverseRelationship = itemsRel
+
+        entity.properties = [name, isDone, createdAt, quantity, uuid, listRel]
+        listEntity.properties = [listName, listCreatedAt, itemsRel]
 
         let model = NSManagedObjectModel()
-        model.entities = [entity]
+        model.entities = [entity, listEntity]
         return model
     }()
 
@@ -59,22 +95,33 @@ enum CoreDataStack {
         let container: NSPersistentContainer = cloudKit
             ? NSPersistentCloudKitContainer(name: "Ostoslista", managedObjectModel: model)
             : NSPersistentContainer(name: "Ostoslista", managedObjectModel: model)
-        if let description = container.persistentStoreDescriptions.first {
-            if inMemory {
-                description.url = URL(fileURLWithPath: "/dev/null")
-            } else if let base = FileManager.default
-                .containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
-                description.url = base.appendingPathComponent("OstoslistaCD.sqlite")
+        if inMemory {
+            container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        } else if let base = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+            // Two stores: the user's own data (private database) and lists
+            // shared TO the user by others (shared database). Order matters:
+            // new objects land in the first store unless assigned explicitly.
+            let privateDesc = NSPersistentStoreDescription(
+                url: base.appendingPathComponent("OstoslistaCD.sqlite"))
+            let sharedDesc = NSPersistentStoreDescription(
+                url: base.appendingPathComponent("OstoslistaCD-shared.sqlite"))
+            for description in [privateDesc, sharedDesc] {
                 // Both processes must agree on history tracking once the
                 // CloudKit-syncing app enables it.
                 description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
                 description.setOption(true as NSNumber,
                                       forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-                if cloudKit {
-                    description.cloudKitContainerOptions =
-                        NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerID)
-                }
             }
+            if cloudKit {
+                privateDesc.cloudKitContainerOptions =
+                    NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerID)
+                let sharedOptions =
+                    NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerID)
+                sharedOptions.databaseScope = .shared
+                sharedDesc.cloudKitContainerOptions = sharedOptions
+            }
+            container.persistentStoreDescriptions = [privateDesc, sharedDesc]
         }
         container.loadPersistentStores { _, error in
             if let error { fatalError("Cannot load store: \(error)") }

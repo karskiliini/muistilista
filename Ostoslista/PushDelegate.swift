@@ -38,6 +38,18 @@ final class PushDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCen
         }
     }
 
+    /// Route scene events through our delegate so CloudKit share
+    /// invitations reach the app (CKSharingSupported flow).
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        config.delegateClass = SceneDelegate.self
+        return config
+    }
+
     /// Show remote-change banners also while the app is in the foreground.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,

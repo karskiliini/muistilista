@@ -7,6 +7,7 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var createdAt: Date
     @NSManaged var quantity: Int64
     @NSManaged var uuid: UUID?
+    @NSManaged var list: CDShoppingList?
 
     override func awakeFromInsert() {
         super.awakeFromInsert()

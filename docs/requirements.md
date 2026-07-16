@@ -42,7 +42,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   push-ilmoituksella — laite päivittää itsensä ilman käyttäjän toimia.
 - **R13** 🔄 Listan voi jakaa perheenjäsenille, joilla on omat Apple ID:t,
   ja kaikki osapuolet voivat lisätä, ruksata, säätää ja poistaa rivejä
-  samasta listasta. (iCloud/CKShare-jako; kutsu sovelluksen jakonapista.)
+  samasta listasta. Jako käynnistetään työkalurivin "Jaa perheelle"
+  -napista (Applen jakonäkymä, kutsu esim. Viesteillä); kutsun hyväksyntä
+  avaa saman listan vastaanottajan appiin. (Toteutus valmis 16.7.2026 —
+  tila vaihtuu ✅:ksi kun päästä päähän -testi perheenjäsenen laitteella
+  on tehty; jakelu vaatii R15:n TestFlightin.)
 - **R14** ✅ Sama sovellus toimii myös Macilla (mm. tuotteiden helppoon
   kirjoittamiseen ja monilaiteympäristön testaamiseen) sekä iPadilla, samaa
   listaa synkaten.

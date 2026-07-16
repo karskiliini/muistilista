@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import CloudKit
 
 struct ShoppingListView: View {
     @Environment(\.managedObjectContext) private var context
@@ -8,6 +9,9 @@ struct ShoppingListView: View {
     private var items: FetchedResults<CDShoppingItem>
     @State private var newItemName = ""
     @FocusState private var inputFocused: Bool
+    @State private var activeShare: CKShare?
+    @State private var shareContainer: CKContainer?
+    @State private var sharePresented = false
 
     private var sortedItems: [CDShoppingItem] { ShoppingListLogic.sorted(Array(items)) }
     private var checkedCount: Int { ShoppingListLogic.checked(Array(items)).count }
@@ -55,9 +59,25 @@ struct ShoppingListView: View {
                     }
                     .keyboardShortcut("r", modifiers: .command)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        Task {
+                            if let (share, container) = try? await store.fetchOrCreateShare() {
+                                activeShare = share
+                                shareContainer = container
+                                sharePresented = true
+                            }
+                        }
+                    } label: {
+                        Label("Jaa perheelle", systemImage: "person.crop.circle.badge.plus")
+                    }
                     Button("Tyhjennä ostetut", action: clearChecked)
                         .disabled(checkedCount == 0)
+                }
+            }
+            .sheet(isPresented: $sharePresented) {
+                if let activeShare, let shareContainer {
+                    CloudSharingView(share: activeShare, container: shareContainer)
                 }
             }
         }
@@ -67,6 +87,14 @@ struct ShoppingListView: View {
         guard let name = ShoppingListLogic.normalized(newItemName) else { return }
         let item = CDShoppingItem(context: context)
         item.name = name
+        // New items must land in the same store as the list they belong to
+        // (a family member's list lives in the shared store).
+        if let list = store.currentList {
+            if let listStore = list.objectID.persistentStore {
+                context.assign(item, to: listStore)
+            }
+            item.list = list
+        }
         save()
         newItemName = ""
         inputFocused = true

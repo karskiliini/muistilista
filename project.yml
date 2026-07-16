@@ -27,6 +27,7 @@ targets:
       properties:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
+        CKSharingSupported: true
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:
@@ -37,7 +38,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.6.0
+        MARKETING_VERSION: 1.7.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
@@ -51,6 +52,7 @@ targets:
     sources:
       - OstoslistaWidget
       - Ostoslista/CDShoppingItem.swift
+      - Ostoslista/CDShoppingList.swift
       - Ostoslista/CoreDataStack.swift
       - Ostoslista/ShoppingListLogic.swift
     entitlements:
