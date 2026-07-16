@@ -24,4 +24,23 @@ final class ShoppingListLogicTests: XCTestCase {
         let milk  = ShoppingItem(name: "maito", isDone: false)
         XCTAssertEqual(ShoppingListLogic.checked([bread, milk]).map(\.name), ["leipä"])
     }
+
+    func testQuantityStaysAtStartForShortDrag() {
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: 0), 1)
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: 35), 1)
+    }
+
+    func testQuantityGrowsOneStepPer36Points() {
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: 36), 2)
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: 200), 6)
+    }
+
+    func testQuantityScrubsDownWhenDraggingLeft() {
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 4, dragWidth: -72), 2)
+    }
+
+    func testQuantityNeverGoesBelowOne() {
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 2, dragWidth: -500), 1)
+        XCTAssertEqual(ShoppingListLogic.quantity(start: 1, dragWidth: -36), 1)
+    }
 }

@@ -64,6 +64,18 @@ Single-target SwiftUI app plus a unit-test target.
 - `project.yml` is committed; the generated `.xcodeproj` is regenerable.
 - Deployment target: iOS 17.0.
 
+## Feature: drag-to-set quantity (added 2026-07-16, user-approved)
+
+Dragging a row rightward scrubs a quantity: a blue "× N" capsule appears
+and N grows one step per 36 pt of horizontal drag, starting from the
+item's current quantity. Dragging back left within the same gesture
+lowers it; minimum 1. Lifting the finger commits. When quantity > 1 the
+row permanently shows a secondary "× N" at its trailing edge; quantity 1
+shows nothing. Model gains `quantity: Int = 1` (SwiftData lightweight
+migration). Mapping lives in `ShoppingListLogic.quantity(start:dragWidth:)`
+(unit-tested). Drags that begin leftward or mostly vertical are ignored so
+swipe-to-delete and scrolling keep working.
+
 ## Out of scope (YAGNI)
 
 Categories, multiple lists, quantities, sync, sharing, widgets, App Store

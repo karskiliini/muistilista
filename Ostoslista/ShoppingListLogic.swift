@@ -18,4 +18,10 @@ enum ShoppingListLogic {
     static func checked(_ items: [ShoppingItem]) -> [ShoppingItem] {
         items.filter(\.isDone)
     }
+
+    /// Maps a horizontal drag to a quantity: one step per 36 pt from
+    /// `start`, clamped to a minimum of 1.
+    static func quantity(start: Int, dragWidth: CGFloat) -> Int {
+        max(1, start + Int(dragWidth / 36))
+    }
 }
