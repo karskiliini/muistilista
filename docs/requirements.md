@@ -87,12 +87,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   laidan drag handlesta. Vedon aikana:
   - vedettävä rivi **nousee** (skaalaus + varjo) ja **haamu-esikatselu**
     (nimi, kuva, määrä) seuraa sormea;
-  - kun sormi on kelvollisen kohdan päällä, muut rivit **tekevät tilaa** ja
-    himmennetty rivi asettuu uuteen paikkaansa **reaaliaikaisesti**;
-  - **kategorian sisäinen järjestely**: samassa kaupassa pysyen rivi asettuu
-    sormen kohdan mukaiseen paikkaan (pysyvä järjestys `sortOrder`illa);
-  - **siirto kauppojen välillä**: pudotus toisen (näkyvän) kaupan osioon
-    siirtää tuotteen sinne;
+  - **kategorian sisäinen järjestely**: samassa kaupassa pysyen muut rivit
+    **tekevät tilaa reaaliaikaisesti** ja rivi asettuu sormen kohtaan (pysyvä
+    järjestys `sortOrder`illa);
+  - **siirto kauppojen välillä**: vedettävä rivi pysyy vedon aikana omassa
+    osiossaan (himmennettynä) ja kohdekaupan **otsake korostuu**; itse siirto
+    tapahtuu vasta pudotuksessa. (Rivi EI valu elävästi toiseen osioon vedon
+    aikana, koska se relayouttaisi listan, siirtäisi sormen osumakohtaa ja
+    saisi rivin poukkoilemaan osioiden välillä — mikä jäädytti sovelluksen.)
   - **"Ei kauppaa" -pudotusvyöhyke** on aina näkyvissä alimpana vedon aikana,
     joten vapaatuotteen voi aina pudottaa takaisin kaupattomaksi;
   - pudotuksen jälkeen näkymä keskittyy siirrettyyn tuotteeseen.

@@ -93,23 +93,21 @@ struct ShoppingListView: View {
             }
     }
 
-    /// The groups the List renders. While dragging a (free) item this differs
-    /// from the stored grouping: the dragged item is shown at its live target
-    /// position (so rows make room for it in real time), and a "Muut"
-    /// (no-store) drop zone is always surfaced at the bottom — even when empty
-    /// — so the item can always be dropped back to no store.
+    /// The groups the List renders. While dragging, the item stays in its OWN
+    /// store section — reordering live within it — but does NOT move into a
+    /// different section until the drop. Live cross-section moves relayout the
+    /// List, which shifts the finger's hit-test and makes the item oscillate
+    /// between sections (a hang); the target section is instead just
+    /// highlighted, with the ghost following the finger. A "Muut" (no-store)
+    /// drop zone is always surfaced at the bottom.
     private var displayGroups: [StoreGroup] {
-        // Where each item displays; the dragged one follows the finger.
-        func displayStore(_ item: CDShoppingItem) -> String {
-            if isDragging, item.objectID == dragItem, let target = dragTargetStore { return target }
-            return item.storeName ?? ""
-        }
-        var byStore = Dictionary(grouping: Array(items)) { displayStore($0) }
+        var byStore = Dictionary(grouping: Array(items)) { $0.storeName ?? "" }
         if isDragging, byStore[""] == nil { byStore[""] = [] }   // always offer "Ei kauppaa"
+        // Live reorder only applies within the dragged item's own store.
+        let reorderStore = (isDragging && dragTargetStore == dragStartStore) ? dragStartStore : nil
         return byStore.map { key, groupItems -> StoreGroup in
             var ordered = ShoppingListLogic.sorted(groupItems)
-            // Slot the dragged item into its live target index within its store.
-            if isDragging, let dragItem, dragTargetStore == key,
+            if let reorderStore, reorderStore == key, let dragItem,
                let idx = ordered.firstIndex(where: { $0.objectID == dragItem }) {
                 let moved = ordered.remove(at: idx)
                 ordered.insert(moved, at: max(0, min(dragTargetIndex, ordered.count)))
