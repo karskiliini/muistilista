@@ -65,9 +65,9 @@ struct ShoppingRowView: View {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .font(.body)
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
-            // Store items reserve a fixed leading slot so their names align
-            // whether or not an image loaded.
-            if item.isFromStore {
+            // Only real catalog images get a thumbnail — no empty placeholder
+            // boxes for plain store-assigned items.
+            if !item.imageURLs.isEmpty {
                 thumbnail.frame(width: 26, height: 26)
             }
             VStack(alignment: .leading, spacing: 1) {
@@ -98,7 +98,7 @@ struct ShoppingRowView: View {
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            if item.isFromStore {
+            if item.hasCatalogDetail {
                 Button { showingDetail = true } label: {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.tint)

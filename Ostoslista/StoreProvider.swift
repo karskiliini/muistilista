@@ -75,11 +75,13 @@ final class StoreProvider: ObservableObject {
             item.name = name
             let store = parts.count > 1 ? parts[1] : ""
             if !store.isEmpty { item.storeName = store }
-            if parts.count > 2, parts[2] == "cat" {
+            let opts = parts.count > 2 ? parts[2] : ""
+            if opts.contains("cat") {
                 item.fromCatalog = true
                 item.catalogPrice = "1,99 €"
                 item.priceValue = 1.99
             }
+            if opts.contains("done") { item.isDone = true }
         }
         try? context.save()
     }

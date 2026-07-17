@@ -42,6 +42,17 @@ final class CDShoppingItem: NSManagedObject {
     /// A store-sourced item carries at least a store name.
     var isFromStore: Bool { (storeName ?? "").isEmpty == false }
 
+    /// Whether there is real catalog detail worth an image/info button — so
+    /// plain store-assigned free-text items don't show empty thumbnails or open
+    /// an empty detail view.
+    var hasCatalogDetail: Bool {
+        fromCatalog
+            || (catalogPrice ?? "").isEmpty == false
+            || (productDescription ?? "").isEmpty == false
+            || (shelfLocation ?? "").isEmpty == false
+            || imageURLs.isEmpty == false
+    }
+
     override func awakeFromInsert() {
         super.awakeFromInsert()
         let now = Date.now

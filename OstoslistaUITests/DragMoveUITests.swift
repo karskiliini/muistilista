@@ -133,6 +133,26 @@ final class DragMoveUITests: XCTestCase {
                       "app hung after quantity scrub")
     }
 
+    /// Regression for the reported freeze: a SLOW drag of a free item from
+    /// "Muut" up through Prisma into K-Rauta (many events crossing sections,
+    /// like a real finger). Must stay responsive and land in K-Rauta.
+    func testSlowCrossSectionDragStaysResponsive() throws {
+        launch(seed: "ruuvi|K-Rauta|cat;maito|Prisma;omena||")
+        let handle = element("handle-omena")
+        XCTAssertTrue(handle.waitForExistence(timeout: 10))
+
+        handle.press(forDuration: 1.0, thenDragTo: element("store-ruuvi"))
+
+        let dbg = element("debug-drop").label
+        addFreeItem("kahvi")
+        XCTAssertTrue(app.staticTexts["kahvi"].waitForExistence(timeout: 10),
+                      "app hung during slow cross-section drag")
+        let omena = element("store-omena")
+        XCTAssertTrue(omena.waitForExistence(timeout: 3), "omena did not move (debug: \(dbg))")
+        XCTAssertTrue(omena.label.contains("K-Rauta"),
+                      "omena should be in K-Rauta (got: \(omena.label))")
+    }
+
     /// Regression: the app must stay responsive after a drag-drop — add an
     /// item once the drop settles and confirm it appears.
     func testResponsiveAfterDrop() throws {

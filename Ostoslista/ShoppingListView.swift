@@ -25,7 +25,10 @@ struct ShoppingListView: View {
 
     // Custom store drag. All positions are in the List's "list" space.
     @State private var dragItem: NSManagedObjectID?          // item being dragged
-    @State private var dragLocation: CGPoint = .zero          // finger position
+    // Finger position lives in a separate observable that ONLY the ghost view
+    // watches, so updating it every frame does NOT re-render the List (held via
+    // @State, which doesn't subscribe to its @Published — by design).
+    @State private var dragState = DragState()
     @State private var dragStartStore = ""                    // its store at grab time
     // Fixed snapshot of every OTHER row's (store, midY), captured once the
     // drag layout settles. Hit-testing against this — not the live, shifting
@@ -45,6 +48,11 @@ struct ShoppingListView: View {
 
     private func itemByID(_ id: NSManagedObjectID) -> CDShoppingItem? {
         items.first { $0.objectID == id }
+    }
+
+    /// Light tactile feedback for key interactions (no-op in the Simulator).
+    private func haptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 
     /// A signature that changes whenever the rendered layout should re-animate:
@@ -92,15 +100,15 @@ struct ShoppingListView: View {
     /// so the item moving can't shift the hit-test and oscillate. A "Muut"
     /// (no-store) drop zone is always surfaced at the bottom during a drag.
     private var displayGroups: [StoreGroup] {
-        func displayStore(_ item: CDShoppingItem) -> String {
-            if isDragging, item.objectID == dragItem, let target = dragTargetStore { return target }
-            return item.storeName ?? ""
-        }
-        var byStore = Dictionary(grouping: Array(items)) { displayStore($0) }
+        var byStore = Dictionary(grouping: Array(items)) { $0.storeName ?? "" }
         if isDragging, byStore[""] == nil { byStore[""] = [] }   // always offer "Ei kauppaa"
+        // Live reorder only WITHIN the dragged item's own store (same section →
+        // the drag gesture survives). Cross-section moves would recreate the
+        // row's cell and cancel the gesture, so those are shown via a preview.
+        let reorderStore = (isDragging && dragTargetStore == dragStartStore) ? dragStartStore : nil
         return byStore.map { key, groupItems -> StoreGroup in
             var ordered = ShoppingListLogic.sorted(groupItems)
-            if isDragging, let dragItem, dragTargetStore == key,
+            if let reorderStore, reorderStore == key, let dragItem,
                let idx = ordered.firstIndex(where: { $0.objectID == dragItem }) {
                 let moved = ordered.remove(at: idx)
                 ordered.insert(moved, at: max(0, min(dragTargetIndex, ordered.count)))
@@ -111,6 +119,29 @@ struct ShoppingListView: View {
             if a.store.isEmpty != b.store.isEmpty { return !a.store.isEmpty } // "Muut" last
             return a.store.localizedCaseInsensitiveCompare(b.store) == .orderedAscending
         }
+    }
+
+    /// Dragging toward a DIFFERENT store than the item's own.
+    private var isCrossCategoryDrag: Bool {
+        isDragging && dragTargetStore != nil && dragTargetStore != dragStartStore
+    }
+
+    /// Rows to render for a section: its real items, plus — for a cross-category
+    /// drag targeting this section — a sliding preview at the target slot.
+    private func sectionRows(for group: StoreGroup) -> [RowSpec] {
+        var specs = group.items.map { RowSpec.real($0) }
+        if isCrossCategoryDrag, dragTargetStore == group.store,
+           let dragItem, let item = itemByID(dragItem) {
+            specs.insert(.preview(item), at: max(0, min(dragTargetIndex, specs.count)))
+        }
+        return specs
+    }
+
+    /// The dragged row fades while reordering (it's the visual) or fades further
+    /// while moving to another store (the preview is the visual instead).
+    private func rowOpacity(_ item: CDShoppingItem) -> Double {
+        if dragItem == item.objectID { return isCrossCategoryDrag ? 0.3 : 0.5 }
+        return recentlyMoved == item.objectID ? 0.5 : 1
     }
 
     private var grandTotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
@@ -145,30 +176,35 @@ struct ShoppingListView: View {
                             // Empty drop zone shown only during a drag.
                             DropZonePlaceholder(store: group.store)
                         }
-                        ForEach(group.items) { item in
-                            ShoppingRowView(
-                                item: item,
-                                onToggle: { item.isDone.toggle(); save() },
-                                onStoreDrag: handleStoreDrag,
-                                onStoreDrop: handleStoreDrop)
-                            .id(item.objectID)
-                            .opacity(dragItem == item.objectID ? 0.5
-                                     : (recentlyMoved == item.objectID ? 0.5 : 1))
-                            // Lift the dragged row so it reads as picked up.
-                            .scaleEffect(dragItem == item.objectID ? 1.03 : 1, anchor: .leading)
-                            .shadow(color: .black.opacity(dragItem == item.objectID ? 0.18 : 0),
-                                    radius: 6, y: 3)
-                            .zIndex(dragItem == item.objectID ? 1 : 0)
-                            // Compact rows so many items fit on screen.
-                            .listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 10))
-                            // Report each row's extent so the drag can be
-                            // hit-tested against store sections and slots.
-                            .background(GeometryReader { geo in
-                                Color.clear.preference(
-                                    key: RowFrameKey.self,
-                                    value: [RowFrame(store: group.store, id: item.objectID,
-                                                     rect: geo.frame(in: .global))])
-                            })
+                        ForEach(sectionRows(for: group)) { spec in
+                            switch spec {
+                            case .real(let item):
+                                ShoppingRowView(
+                                    item: item,
+                                    onToggle: { item.isDone.toggle(); haptic(.light); save() },
+                                    onStoreDrag: handleStoreDrag,
+                                    onStoreDrop: handleStoreDrop)
+                                .id(item.objectID)
+                                // While being dragged to ANOTHER store the row
+                                // stays here (so the gesture survives) but fades
+                                // out — the sliding preview carries the visual.
+                                .opacity(rowOpacity(item))
+                                .scaleEffect(dragItem == item.objectID && !isCrossCategoryDrag ? 1.03 : 1,
+                                             anchor: .leading)
+                                .zIndex(dragItem == item.objectID ? 1 : 0)
+                                .listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 10))
+                                .background(GeometryReader { geo in
+                                    Color.clear.preference(
+                                        key: RowFrameKey.self,
+                                        value: [RowFrame(store: group.store, id: item.objectID,
+                                                         rect: geo.frame(in: .global))])
+                                })
+                            case .preview(let item):
+                                ShoppingRowView(item: item, onToggle: {})
+                                    .opacity(0.55)
+                                    .allowsHitTesting(false)
+                                    .listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 10))
+                            }
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
@@ -202,20 +238,14 @@ struct ShoppingListView: View {
             .environment(\.defaultMinListRowHeight, 36)   // allow short rows
             // Silently stash frames (no re-render — see `frames` declaration).
             .onPreferenceChange(RowFrameKey.self) { frames.rows = $0 }
-            // Floating ghost of the dragged item, tracking the finger. The
-            // finger position is in global space, so convert it into this
-            // overlay's local space via its own global origin.
+            // Floating ghost of the dragged item, tracking the finger. It lives
+            // in its own view observing `dragState`, so the finger moving
+            // re-renders ONLY the ghost — the List re-renders solely when the
+            // drop target changes slot/section (not every frame), which is what
+            // keeps a cross-section drag from flooding the List and hanging.
             .overlay {
-                if let dragItem, let item = itemByID(dragItem) {
-                    GeometryReader { geo in
-                        let origin = geo.frame(in: .global).origin
-                        DragPreview(item: item)
-                            .position(x: dragLocation.x - origin.x,
-                                      y: dragLocation.y - origin.y)
-                    }
-                    .allowsHitTesting(false)
-                    .transition(.scale(scale: 0.9).combined(with: .opacity))
-                }
+                DragGhostOverlay(dragState: dragState,
+                                 item: dragItem.flatMap { itemByID($0) })
             }
             .onChange(of: scrollTarget) { _, target in
                 guard let target else { return }
@@ -363,13 +393,14 @@ struct ShoppingListView: View {
     /// fixed slot snapshot. Every later callback maps the finger onto a target
     /// using that fixed snapshot, so moving the item never shifts the hit-test.
     private func handleStoreDrag(_ id: NSManagedObjectID, _ location: CGPoint) {
-        dragLocation = location
+        dragState.location = location   // moves the ghost only (no List re-render)
         if dragItem != id {
             dragItem = id
             dragStartStore = itemByID(id)?.storeName ?? ""
             dragSlots = []
             dragTargetStore = dragStartStore
             dragTargetIndex = currentIndex(of: id, inStore: dragStartStore)
+            haptic(.rigid)   // "lift"
             return
         }
         if dragSlots.isEmpty { dragSlots = captureSlots(excluding: id) }
@@ -412,6 +443,7 @@ struct ShoppingListView: View {
         let index = dragTargetIndex
         let moved = commitDrag(id: id, toStore: target, index: index)
         withAnimation(.spring(duration: 0.3)) { endDrag() }
+        if moved > 0 { haptic(.soft) }   // "settle"
         if isUITest { dropDebug = "store:\(target.isEmpty ? "-" : target):i\(index):m\(moved)" }
     }
 
@@ -510,6 +542,45 @@ private final class RowFrameStore {
 private struct DragSlot {
     let store: String
     let midY: CGFloat
+}
+
+/// A row to render in a section: a real (interactive) item, or a dimmed preview
+/// of the item currently being dragged into this section from another one.
+private enum RowSpec: Identifiable {
+    case real(CDShoppingItem)
+    case preview(CDShoppingItem)
+    var id: String {
+        switch self {
+        case .real(let i): return i.objectID.uriRepresentation().absoluteString
+        case .preview(let i): return "preview:" + i.objectID.uriRepresentation().absoluteString
+        }
+    }
+}
+
+/// The live finger position, observed ONLY by the ghost overlay. Kept separate
+/// from the List's state so tracking the finger doesn't re-render the List.
+private final class DragState: ObservableObject {
+    @Published var location: CGPoint = .zero
+}
+
+/// The floating ghost. Re-renders on finger movement (it observes `dragState`)
+/// without touching the List, and appears/disappears when `item` changes.
+private struct DragGhostOverlay: View {
+    @ObservedObject var dragState: DragState
+    let item: CDShoppingItem?
+
+    var body: some View {
+        if let item {
+            GeometryReader { geo in
+                let origin = geo.frame(in: .global).origin
+                DragPreview(item: item)
+                    .position(x: dragState.location.x - origin.x,
+                              y: dragState.location.y - origin.y)
+            }
+            .allowsHitTesting(false)
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        }
+    }
 }
 
 /// Empty store section shown only during a drag, so a free item can be dropped

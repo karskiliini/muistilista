@@ -85,12 +85,16 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   jo näkyviin kauppoihin ja "Ei kauppaa" -vyöhykkeeseen.
 - **R32** ✅ Tuotteita voi järjestellä ja siirtää vetämällä rivin vasemman
   laidan drag handlesta. Vedon aikana:
-  - vedettävä rivi **nousee** (skaalaus + varjo) ja **haamu-esikatselu**
-    (nimi, kuva, määrä) seuraa sormea;
-  - **rivi valuu elävästi** vanhalta paikaltaan sormen osoittamaan uuteen
-    paikkaan — sekä **kategorian sisällä** (eri positio) että **toiseen
-    kategoriaan** — ja muut rivit tekevät tilaa reaaliajassa. Järjestys
-    tallentuu pysyvästi (`sortOrder`).
+  - **haamu-esikatselu** (nimi, kuva, määrä) seuraa sormea; lisäksi
+    tuntopalaute (haptic) noston, pudotuksen ja ✓-merkinnän yhteydessä;
+  - **kategorian sisällä**: rivi valuu elävästi sormen osoittamaan uuteen
+    positioon ja muut rivit tekevät tilaa reaaliajassa;
+  - **toiseen kategoriaan**: itse ele-rivi pysyy omassa osiossaan (himmenee),
+    ja **himmennetty esikatselu­rivi valuu kohdekaupan osioon** sormen kohtaan.
+    Näin siksi että jos ele-rivi itse siirtyisi toiseen `List`-osioon, SwiftUI
+    loisi solun uudelleen ja **peruisi vedon** (pudotus katosi, näytti
+    jäätymiseltä). Pudotuksessa siirto viedään dataan. Järjestys tallentuu
+    pysyvästi (`sortOrder`).
   - **Jokaisella rivillä on drag handle.** Vapaatekstituotteen voi järjestellä
     ja siirtää toiseen kauppaan; **kauppasidonnaisen (katalogi)tuotteen voi
     järjestellä vain oman kauppansa sisällä** — se ei voi vaihtaa kauppaa
@@ -180,6 +184,10 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla
   ei ole mitään extraa — pelkkä nimi.
+  **Pikkukuva näkyy vain jos tuotteella on oikea kuva** (ei tyhjää
+  paikkamerkkiä), ja **info-nappi vain jos tuotteella on aitoa katalogitietoa**
+  (hinta/kuvaus/hyllypaikka/kuva) — pelkkä kauppaan sijoitettu vapaateksti­tuote
+  ei näytä kumpaakaan, jolloin nimet linjautuvat siististi.
   **Rivit ovat matalia (paljon mahtuu näytölle):** hinta ja kauppa/hyllypaikka
   näkyvät **nimen alapuolella** pienellä tekstillä (ei oikeassa laidassa, jottei
   vie leveyttä), ja rivin pystymitta on tiivis.
