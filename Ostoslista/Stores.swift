@@ -18,7 +18,7 @@ enum Stores {
             "K-Citymarket", "K-Supermarket", "K-Market", "K-Rauta",
         ]),
         Group(name: "Muut", stores: [
-            "Lidl", "Tokmanni", "Puuilo", "Motonet",
+            "Lidl", "Tokmanni", "Puuilo", "Motonet", "Gigantti",
         ]),
     ]
 

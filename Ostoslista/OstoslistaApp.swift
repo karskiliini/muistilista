@@ -9,8 +9,12 @@ struct OstoslistaApp: App {
 
     init() {
         CrashReporter.install()
-        // Warm the K-ruoka web engine so its first search is fast.
-        Task { @MainActor in KRuokaWebEngine.shared.warmUp() }
+        // Warm the web engines (K-ruoka, Gigantti) so their first search is
+        // fast — both need a WKWebView to pass their bot challenge.
+        Task { @MainActor in
+            KRuokaWebEngine.shared.warmUp()
+            GigantiWebEngine.shared.warmUp()
+        }
     }
 
     var body: some Scene {

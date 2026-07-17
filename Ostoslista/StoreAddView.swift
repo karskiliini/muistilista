@@ -75,6 +75,7 @@ struct StoreAddView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
+            .accessibilityIdentifier("store-picker")
         }
     }
 

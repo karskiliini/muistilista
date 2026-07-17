@@ -41,6 +41,7 @@ enum CatalogRegistry {
         if TokmanniCatalog.handles(storeName: storeName) { return TokmanniCatalog() }
         if KRautaCatalog.handles(storeName: storeName) { return KRautaCatalog() }
         if MotonetCatalog.handles(storeName: storeName) { return MotonetCatalog() }
+        if GigantiCatalog.handles(storeName: storeName) { return GigantiCatalog() }
         if KRuokaCatalog.handles(storeName: storeName) { return KRuokaCatalog() }
         return nil
     }

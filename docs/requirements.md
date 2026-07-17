@@ -162,14 +162,17 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   haetaan dynaamisesti sivulta koska se vanhenee), Tokmanni (Klevu,
   klusteri eucs11), K-Rauta (hakusivun HTML parsitaan; sisältää oikean
   hyllypaikan osasto+hyllynumero muodossa) ja Motonet
-  (`/api/suggestions`, kuva Broman-CDN:stä tuotekoodilla). Loput kaupat
-  eivät ole appista rakennettavissa (selvitetty 17.7.2026): **K-ruoka**
-  (K-Citymarket/K-Supermarket/K-Market) on Cloudflaren bottisuojauksen
-  takana — vain oikea selain läpäisee, URLSession saa 403/haaste; sen
-  kauppahaku sijainnilla toimisi periaatteessa (POST /kr-api/stores/search
-  {latitude,longitude}) mutta jää suojauksen taakse. **Lidl** ei myy ruokaa
+  (`/api/suggestions`, kuva Broman-CDN:stä tuotekoodilla).
+  **Bottisuojauksen takana olevat kaupat käyttävät piilotettua WKWebView'ta**,
+  joka läpäisee haasteen kuten Safari: **K-ruoka** (K-Citymarket/K-Supermarket/
+  K-Market, Cloudflare) hakee tuotteet sivun kautta, ja **Gigantti** (Vercelin
+  bottihaaste) hakee sivun kontekstissa lyhytikäisen allekirjoitetun Algolia-
+  avaimen (`/api/algolia/signed-api-key`) ja kysyy sillä suoraan Algoliaa
+  (indeksi `commerce_b2c_OCFIGIG`). Molemmat menevät `.unavailable`-tilaan jos
+  suojaus/verkko pettää. **Näin kaikilla listan kaupoilla, joilla haku on
+  mahdollinen, on haku** — ainoa poikkeus on **Lidl**, joka ei myy tuotteita
   verkossa (vain tarjoukset), joten haettavaa katalogia ei ole. K-ruokan
-  ainoa avoin reitti on virallinen **Kesko-API**, joka vaatii käyttäjän
+  virallinen avoin reitti olisi **Kesko-API**, joka vaatii käyttäjän
   ilmaisen
   developer.kesko.fi-avaimen — sille käytetään vapaasanalisäystä kunnes
   avain on annettu. Vapaasanalisäys päänäkymässä ei muutu tästä millään
