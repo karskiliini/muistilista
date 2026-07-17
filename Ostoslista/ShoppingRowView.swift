@@ -1,8 +1,13 @@
 import SwiftUI
+import CoreData
 
 struct ShoppingRowView: View {
     @ObservedObject var item: CDShoppingItem
     let onToggle: () -> Void
+    /// Store drag callbacks — locations are in the List's "list" coordinate
+    /// space so the parent can hit-test them against store sections.
+    var onStoreDrag: ((NSManagedObjectID, CGPoint) -> Void)? = nil
+    var onStoreDrop: ((NSManagedObjectID, CGPoint) -> Void)? = nil
 
     /// Live value while scrubbing; nil when no drag is active.
     @State private var dragQuantity: Int?
@@ -26,28 +31,27 @@ struct ShoppingRowView: View {
                 Image(systemName: "line.3.horizontal")
                     .font(.callout)
                     .foregroundStyle(.tertiary)
-                    .draggable(item.objectID.uriRepresentation().absoluteString) { dragPreview }
+                    // A generous, opaque touch target so the drag is easy to
+                    // grab and reliably wins over the List's own scrolling.
+                    .frame(width: 34, height: 40)
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(storeDrag)
                     .accessibilityLabel("Siirrä vetämällä")
+                    .accessibilityIdentifier("handle-\(item.name)")
             }
             rowContent
         }
     }
 
-    /// Live drag preview: the item as it moves to the new store.
-    private var dragPreview: some View {
-        HStack(spacing: 8) {
-            if item.isFromStore, let url = item.imageURLs.first {
-                CachedAsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
-                    .frame(width: 24, height: 24)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            } else {
-                Image(systemName: "cart").foregroundStyle(.tint)
-            }
-            Text(item.name).lineLimit(1)
-            if item.quantity > 1 { Text("× \(item.quantity)").foregroundStyle(.secondary) }
-        }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+    /// Custom store-move drag. Unlike `.draggable`/`.dropDestination` (which
+    /// never engaged inside this List), a plain DragGesture responds to raw
+    /// touch-move events, so it works on-device AND under simulated UI-test
+    /// gestures. Locations resolve in the parent List's "list" space so the
+    /// parent can map the finger onto a store section.
+    private var storeDrag: some Gesture {
+        DragGesture(minimumDistance: 6, coordinateSpace: .named("list"))
+            .onChanged { onStoreDrag?(item.objectID, $0.location) }
+            .onEnded { onStoreDrop?(item.objectID, $0.location) }
     }
 
     private var rowContent: some View {
@@ -69,6 +73,7 @@ struct ShoppingRowView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .accessibilityIdentifier("store-\(item.name)")
                 }
             }
             Spacer(minLength: 8)
@@ -152,6 +157,7 @@ struct ShoppingRowView: View {
         }
         .buttonStyle(.borderless)
         .accessibilityLabel("Toiminnot")
+        .accessibilityIdentifier("actions-\(item.name)")
     }
 
     private var thumbnail: some View {

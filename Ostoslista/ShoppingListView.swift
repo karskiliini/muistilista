@@ -21,6 +21,36 @@ struct ShoppingListView: View {
     @State private var isSharing = false
     @State private var shareError: String?
     @State private var pendingCrash: CrashReport?
+    @State private var dropDebug = "d0m0"   // UI-test drop diagnostics
+
+    // Custom store drag: the item being dragged, the finger position, and the
+    // captured vertical extents of every row (all in the List's "list" space).
+    @State private var dragItem: NSManagedObjectID?
+    @State private var dragLocation: CGPoint = .zero
+    @State private var rowFrames: [RowFrame] = []
+
+    private var isUITest: Bool { ProcessInfo.processInfo.arguments.contains("-UITestReset") }
+
+    /// The store whose rows the finger is currently over (nil = not dragging).
+    private var hoverStore: String? {
+        guard dragItem != nil else { return nil }
+        return store(atY: dragLocation.y)
+    }
+
+    /// Map a Y position in "list" space onto a store, clamping to the nearest
+    /// section when the finger is above the first or below the last row.
+    private func store(atY y: CGFloat) -> String? {
+        if let hit = rowFrames.first(where: { $0.rect.minY <= y && y <= $0.rect.maxY }) {
+            return hit.store
+        }
+        guard let first = rowFrames.min(by: { $0.rect.midY < $1.rect.midY }),
+              let last = rowFrames.max(by: { $0.rect.midY < $1.rect.midY }) else { return nil }
+        return y < first.rect.minY ? first.store : last.store
+    }
+
+    private func itemByID(_ id: NSManagedObjectID) -> CDShoppingItem? {
+        items.first { $0.objectID == id }
+    }
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -86,26 +116,29 @@ struct ShoppingListView: View {
                 ForEach(storeGroups) { group in
                     Section {
                         ForEach(group.items) { item in
-                            ShoppingRowView(item: item) {
-                                item.isDone.toggle()
-                                save()
-                            }
+                            ShoppingRowView(
+                                item: item,
+                                onToggle: { item.isDone.toggle(); save() },
+                                onStoreDrag: handleStoreDrag,
+                                onStoreDrop: handleStoreDrop)
                             .id(item.objectID)
-                            .opacity(recentlyMoved == item.objectID ? 0.5 : 1)
-                            // Each row is also a drop target for its store, so
-                            // there's a large reliable area to drop onto (List
-                            // section headers are flaky drop targets).
-                            .dropDestination(for: String.self) { uris, _ in
-                                moveDropped(uris, toStore: group.store)
-                                return true
-                            }
+                            .opacity(dragItem == item.objectID ? 0.35
+                                     : (recentlyMoved == item.objectID ? 0.5 : 1))
+                            // Report each row's vertical extent so a drag can be
+                            // hit-tested against store sections.
+                            .background(GeometryReader { geo in
+                                Color.clear.preference(
+                                    key: RowFrameKey.self,
+                                    value: [RowFrame(store: group.store,
+                                                     rect: geo.frame(in: .named("list")))])
+                            })
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
                         StoreGroupHeader(
                             title: group.title,
                             countText: "\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)",
-                            onDropURIs: { uris in moveDropped(uris, toStore: group.store) })
+                            highlighted: dragItem != nil && hoverStore == group.store)
                     } footer: {
                         if let subtotal = ShoppingListLogic.priceText(group.subtotal) {
                             HStack {
@@ -129,6 +162,17 @@ struct ShoppingListView: View {
             // store group — by keying on a signature that captures store,
             // checked state and order for every item.
             .animation(.spring(duration: 0.35), value: groupSignature)
+            .coordinateSpace(name: "list")
+            .onPreferenceChange(RowFrameKey.self) { rowFrames = $0 }
+            // Floating preview of the dragged item, tracking the finger.
+            .overlay(alignment: .topLeading) {
+                if let dragItem, let item = itemByID(dragItem) {
+                    DragPreview(item: item)
+                        .position(x: dragLocation.x, y: dragLocation.y)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
             .onChange(of: scrollTarget) { _, target in
                 guard let target else { return }
                 // Let the sheet finish dismissing and the row insert, then
@@ -157,9 +201,10 @@ struct ShoppingListView: View {
             .safeAreaInset(edge: .bottom) {
                 HStack {
                     Spacer()
-                    Text("v\(appVersion)")
+                    Text(isUITest ? "v\(appVersion) \(dropDebug)" : "v\(appVersion)")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
+                        .accessibilityIdentifier("debug-drop")
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 2)
@@ -269,28 +314,35 @@ struct ShoppingListView: View {
         save()
     }
 
-    /// Reassign dropped items (carried as objectID URI strings) to a store,
-    /// then center the moved item.
-    private func moveDropped(_ uris: [String], toStore store: String) {
-        guard let coordinator = context.persistentStoreCoordinator else { return }
-        var moved: NSManagedObjectID?
-        for uri in uris {
-            guard let url = URL(string: uri),
-                  let oid = coordinator.managedObjectID(forURIRepresentation: url),
-                  let item = try? context.existingObject(with: oid) as? CDShoppingItem,
-                  item.canChangeStore else { continue }   // catalog items are locked
-            item.storeName = store.isEmpty ? nil : store
-            moved = item.objectID
-        }
+    /// Drag in progress: remember the item and follow the finger.
+    private func handleStoreDrag(_ id: NSManagedObjectID, _ location: CGPoint) {
+        if dragItem != id { dragItem = id }
+        dragLocation = location
+    }
+
+    /// Drag released: move the item to whichever store section it was dropped
+    /// on, then center the moved row.
+    private func handleStoreDrop(_ id: NSManagedObjectID, _ location: CGPoint) {
+        let target = store(atY: location.y)
+        withAnimation { dragItem = nil }
+        let moved = target.map { moveItem(id, toStore: $0) } ?? 0
+        if isUITest { dropDebug = "d\(target == nil ? 0 : 1)m\(moved)" }
+    }
+
+    /// Reassign an item to a store ("" = "Muut"); catalog items stay locked.
+    @discardableResult
+    private func moveItem(_ id: NSManagedObjectID, toStore store: String) -> Int {
+        guard let item = try? context.existingObject(with: id) as? CDShoppingItem,
+              item.canChangeStore else { return 0 }
+        item.storeName = store.isEmpty ? nil : store
         save()   // the List's groupSignature animation flows the row over
-        if let moved {
-            scrollTarget = moved
-            recentlyMoved = moved
-            Task {
-                try? await Task.sleep(for: .milliseconds(600))
-                if recentlyMoved == moved { recentlyMoved = nil }
-            }
+        scrollTarget = id
+        recentlyMoved = id
+        Task {
+            try? await Task.sleep(for: .milliseconds(600))
+            if recentlyMoved == id { recentlyMoved = nil }
         }
+        return 1
     }
 
     private func clearChecked() {
@@ -303,13 +355,12 @@ struct ShoppingListView: View {
     }
 }
 
-/// Store section header that highlights when an item is dragged over it and
-/// reassigns the dropped item to this store.
+/// Store section header that highlights while an item is being dragged over
+/// this store's section.
 private struct StoreGroupHeader: View {
     let title: String
     let countText: String
-    let onDropURIs: ([String]) -> Void
-    @State private var targeted = false
+    let highlighted: Bool
 
     var body: some View {
         HStack {
@@ -318,11 +369,45 @@ private struct StoreGroupHeader: View {
             Text(countText).foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
-        .background(targeted ? Color.accentColor.opacity(0.18) : .clear,
+        .background(highlighted ? Color.accentColor.opacity(0.18) : .clear,
                     in: RoundedRectangle(cornerRadius: 6))
-        .dropDestination(for: String.self) { uris, _ in
-            onDropURIs(uris)
-            return true
-        } isTargeted: { targeted = $0 }
+        .animation(.easeInOut(duration: 0.15), value: highlighted)
+    }
+}
+
+/// A row's store and its vertical extent in "list" space, collected so a
+/// store drag can be hit-tested against the sections.
+private struct RowFrame: Equatable {
+    let store: String
+    let rect: CGRect
+}
+
+private struct RowFrameKey: PreferenceKey {
+    static var defaultValue: [RowFrame] = []
+    static func reduce(value: inout [RowFrame], nextValue: () -> [RowFrame]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+/// The floating bubble shown under the finger while dragging an item to a
+/// new store.
+private struct DragPreview: View {
+    @ObservedObject var item: CDShoppingItem
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if item.isFromStore, let url = item.imageURLs.first {
+                CachedAsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            } else {
+                Image(systemName: "cart").foregroundStyle(.tint)
+            }
+            Text(item.name).lineLimit(1)
+            if item.quantity > 1 { Text("× \(item.quantity)").foregroundStyle(.secondary) }
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .shadow(radius: 6, y: 3)
     }
 }

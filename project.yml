@@ -39,7 +39,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.27.0
+        MARKETING_VERSION: 1.28.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"
@@ -87,10 +87,21 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslistaTests
+  OstoslistaUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [OstoslistaUITests]
+    dependencies:
+      - target: Ostoslista
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslistaUITests
+        TEST_TARGET_NAME: Ostoslista
 schemes:
   Ostoslista:
     build:
       targets:
         Ostoslista: all
     test:
-      targets: [OstoslistaTests]
+      targets: [OstoslistaTests, OstoslistaUITests]

@@ -23,7 +23,10 @@ final class StoreProvider: ObservableObject {
     private var remoteChangeNotifier: RemoteChangeNotifier?
 
     init() {
-        container = CoreDataStack.container(cloudKit: true)
+        // UI tests run against a throwaway in-memory store so each launch
+        // starts empty and never touches the user's real data or CloudKit.
+        let uiTest = ProcessInfo.processInfo.arguments.contains("-UITestReset")
+        container = CoreDataStack.container(inMemory: uiTest, cloudKit: !uiTest)
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
         AppStores.provider = self
         Task { @MainActor in self.ensureList() }

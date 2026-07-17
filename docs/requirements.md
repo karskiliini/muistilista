@@ -86,6 +86,13 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   näytetään live-esikatselu tuotteesta (nimi, kuva, määrä), ja pudotuksen
   jälkeen tuote **valuu animoituna** uuteen ryhmäänsä (himmennettynä siirron
   ajan) ja näkymä keskittyy siihen.
+  Toteutus käyttää omaa `DragGesture`-elettä (ei SwiftUI:n
+  `.draggable`/`.dropDestination`-paria, joka ei koskaan käynnistynyt tämän
+  `List`in sisällä): sormen sijainti hit-testataan talteen kerättyihin
+  rivikehyksiin ("list"-koordinaatistossa) oikean kauppaosion löytämiseksi.
+  **Varmennettu automaattisella UI-testillä** (`OstoslistaUITests`), joka
+  simuloi painallus-ja-veto-eleen emulaattorissa ja tarkistaa, että vapaa
+  tuote siirtyy pudotettuun kauppaan.
   **Kauppasidonnaiset (katalogista lisätyt) tuotteet ovat lukittuja omaan
   kauppaansa** — niillä ei ole drag handlea eikä "Siirrä kauppaan"
   -valikkoa (vain vapaatuotteita voi siirtää). Drag handlen pitkä painallus
@@ -186,6 +193,10 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
 - **R17** ✅ Ei kolmannen osapuolen riippuvuuksia. Xcode-projekti generoidaan
   XcodeGenillä (`project.yml`), eikä generoitua projektia committoida.
 - **R18** ✅ Listalogiikka (järjestys, syötteen siistintä, määrälaskenta) on
-  yksikkötestattu ja riippumaton tallennuskehyksestä.
+  yksikkötestattu ja riippumaton tallennuskehyksestä. Ele­pohjaiset
+  vuorovaikutukset (kuten kaupan vaihto vetämällä, R32) varmennetaan
+  XCUITest-UI-testeillä (`OstoslistaUITests`), jotka ajetaan emulaattorissa
+  in-memory-tallennuksella (`-UITestReset`), jotta ne eivät koske oikeaa dataa
+  eivätkä CloudKitiä.
 - **Rajaukset:** ei kategorioita, ei useita listoja, ei käyttäjäkohtaisia
   oikeuksia jaon sisällä, ei Android-versiota.
