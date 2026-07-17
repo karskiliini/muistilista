@@ -14,6 +14,7 @@ struct ShoppingListView: View {
     @State private var shareContainer: CKContainer?
     @State private var sharePresented = false
     @State private var storeAddPresented = false
+    @State private var storeQuery = ""
     @State private var isRefreshing = false
     @State private var isSharing = false
     @State private var shareError: String?
@@ -36,6 +37,9 @@ struct ShoppingListView: View {
                             .submitLabel(.done)
                             .onSubmit(addItem)
                         Button {
+                            // Carry whatever's been typed into the store search.
+                            storeQuery = newItemName
+                            newItemName = ""
                             storeAddPresented = true
                         } label: {
                             Label("Hae kaupasta", systemImage: "storefront")
@@ -158,7 +162,7 @@ struct ShoppingListView: View {
                 }
             }
             .sheet(isPresented: $storeAddPresented) {
-                StoreAddView()
+                StoreAddView(initialQuery: storeQuery)
             }
         }
     }

@@ -58,9 +58,12 @@ struct SKaupatCatalog: CatalogProvider {
                   let name = p["name"] as? String else { return nil }
             let path = (p["hierarchyPath"] as? [[String: Any]])?.compactMap { $0["name"] as? String } ?? []
             let image = (((p["productDetails"] as? [String: Any])?["productImages"] as? [String: Any])?["mainImage"] as? [String: Any])?["urlTemplate"] as? String
+            // The s-cloud CDN wants its own modifier syntax + webp, e.g.
+            // .../v1/w280h280@_q75/assets/dam-id/<id>.webp — the earlier
+            // "w_240,h_240,c_fit"/png guess returned 400 (no image loaded).
             let resolved = image?
-                .replacingOccurrences(of: "{MODIFIERS}", with: "w_240,h_240,c_fit")
-                .replacingOccurrences(of: "{EXTENSION}", with: "png")
+                .replacingOccurrences(of: "{MODIFIERS}", with: "w280h280@_q75")
+                .replacingOccurrences(of: "{EXTENSION}", with: "webp")
             let comparison: String? = {
                 if let cp = p["comparisonPrice"] as? Double, let cu = p["comparisonUnit"] as? String {
                     let e = String(format: "%.2f", cp).replacingOccurrences(of: ".", with: ",")

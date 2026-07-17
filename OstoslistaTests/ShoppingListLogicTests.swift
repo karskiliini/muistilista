@@ -89,7 +89,22 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(p.categoryPath.first, "Maidot")
         XCTAssertEqual(p.brand, "Kotimaista")
         XCTAssertNotNil(p.imageURL)
-        XCTAssertFalse(p.imageURL!.absoluteString.contains("{MODIFIERS}"))
+        let url = p.imageURL!.absoluteString
+        XCTAssertFalse(url.contains("{MODIFIERS}"))
+        // Must use the s-cloud modifier/extension the CDN actually accepts.
+        XCTAssertTrue(url.contains("w280h280@_q75"), url)
+        XCTAssertTrue(url.hasSuffix(".webp"), url)
+    }
+
+    func testStoredSCloudImageURLGetsRepaired() throws {
+        let container = CoreDataStack.container(inMemory: true)
+        let item = CDShoppingItem(context: container.viewContext)
+        item.name = "suola"
+        item.imageURLsString = "https://cdn.s-cloud.fi/v1/w_240,h_240,c_fit/assets/dam-id/ABC.png"
+        let urls = item.imageURLs
+        XCTAssertEqual(urls.count, 1)
+        XCTAssertEqual(urls[0].absoluteString,
+                       "https://cdn.s-cloud.fi/v1/w280h280@_q75/assets/dam-id/ABC.webp")
     }
 
     func testSKaupatParseReturnsEmptyOnGarbage() {

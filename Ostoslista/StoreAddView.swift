@@ -1,25 +1,28 @@
 import SwiftUI
 import CoreData
 
-/// Optional store-based add flow (R23): pick a store, then either search
-/// the store's live catalog (S-group today) or type freely. Catalog hits
-/// show price + category; tapping one adds it. The family shelf memory
-/// supplies the physical shelf location the catalog can't.
+/// Optional store-based add flow (R23): pick a store, search the store's
+/// live catalog (where available), and tap a hit to add it. The shelf
+/// location is never typed — it comes from the store's own data (e.g.
+/// K-Rauta) and is shown behind the info view. Free-text add stays for
+/// stores without a catalog.
 struct StoreAddView: View {
+    /// Prefilled from the main screen's add field when the store icon is tapped.
+    let initialQuery: String
+
     @EnvironmentObject private var store: StoreProvider
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("lastStoreName") private var storeName = ""
     @State private var productName = ""
-    @State private var shelf = ""
-    @State private var shelfWasRecalled = false
-    @State private var recalledShelfValue = ""
     @State private var addedCount = 0
     @State private var results: [CatalogProduct] = []
     @State private var searching = false
     @State private var searchTask: Task<Void, Never>?
     @FocusState private var productFocused: Bool
+
+    init(initialQuery: String = "") { self.initialQuery = initialQuery }
 
     private var catalog: CatalogProvider? { CatalogRegistry.provider(for: storeName) }
 
@@ -37,6 +40,13 @@ struct StoreAddView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Valmis") { dismiss() }
                 }
+            }
+            .onAppear {
+                if productName.isEmpty, !initialQuery.isEmpty {
+                    productName = initialQuery
+                    onStoreOrQueryChanged()
+                }
+                productFocused = true
             }
         }
     }
@@ -67,22 +77,9 @@ struct StoreAddView: View {
         Section(catalog != nil ? "Hae tuotetta" : "Tuote") {
             TextField(catalog != nil ? "Hae kaupasta…" : "Tuotteen nimi", text: $productName)
                 .focused($productFocused)
+                .submitLabel(catalog == nil ? .done : .search)
+                .onSubmit { if catalog == nil { addManual() } }
                 .onChange(of: productName) { _, _ in onStoreOrQueryChanged() }
-            HStack {
-                TextField("Hyllypaikka (valinnainen)", text: $shelf)
-                    .onChange(of: shelf) { _, new in
-                        // A hand edit (value differs from what recall filled
-                        // in) means it's no longer the remembered value.
-                        if shelfWasRecalled && new != recalledShelfValue {
-                            shelfWasRecalled = false
-                        }
-                    }
-                if shelfWasRecalled {
-                    Image(systemName: "brain")
-                        .foregroundStyle(.tint)
-                        .accessibilityLabel("Perheen hyllymuistista")
-                }
-            }
         }
     }
 
@@ -99,9 +96,9 @@ struct StoreAddView: View {
                 Text("Ei osumia").foregroundStyle(.secondary)
             }
         } header: {
-            Text("S-valikoima")
+            Text("Valikoima")
         } footer: {
-            Text("Hinnat viitteellisiä (edustava S-kauppa). Hyllypaikka tallentuu perheen muistiin, kun annat sen.")
+            Text("Napauta tuote lisätäksesi. Hyllypaikka (jos kauppa tarjoaa sen) näkyy tuotteen ⓘ-näkymässä.")
         }
     }
 
@@ -119,9 +116,8 @@ struct StoreAddView: View {
 
     // MARK: - Behavior
 
-    /// Debounced catalog search + shelf recall whenever store or query changes.
+    /// Debounced catalog search whenever store or query changes.
     private func onStoreOrQueryChanged() {
-        recallShelfIfKnown(for: productName)
         searchTask?.cancel()
         guard let catalog, let query = ShoppingListLogic.normalized(productName) else {
             results = []; searching = false; return
@@ -136,39 +132,25 @@ struct StoreAddView: View {
         }
     }
 
-    private func recallShelfIfKnown(for product: String) {
-        guard shelf.isEmpty || shelfWasRecalled,
-              let name = ShoppingListLogic.normalized(product),
-              let known = store.recallShelf(product: name, store: storeName) else {
-            if shelfWasRecalled { shelf = ""; shelfWasRecalled = false }
-            return
-        }
-        recalledShelfValue = known
-        shelf = known
-        shelfWasRecalled = true
-    }
-
     private func addCatalog(_ product: CatalogProduct) {
-        // Real shelf from the chain wins; else the shelf the user typed;
-        // else the category breadcrumb as a coarse hint.
-        let shelfHint = product.shelfLocation
-            ?? (shelf.isEmpty ? ShoppingListLogic.categoryHint(product.categoryPath) : shelf)
-        insert(name: product.name, shelfHint: shelfHint, catalog: product)
+        // Shelf comes from the chain's own data (nil for stores that don't
+        // publish it) — never typed by the user.
+        insert(name: product.name, shelf: product.shelfLocation, catalog: product)
     }
 
     private func addManual() {
         guard let name = ShoppingListLogic.normalized(productName) else { return }
-        insert(name: name, shelfHint: ShoppingListLogic.normalized(shelf), catalog: nil)
+        insert(name: name, shelf: nil, catalog: nil)
     }
 
-    /// Shared insert: item lands in the list's store, remembers the shelf,
-    /// and carries the catalog's price/description/images when present.
-    private func insert(name: String, shelfHint: String?, catalog: CatalogProduct?) {
+    /// Shared insert: item lands in the list's store and carries the
+    /// catalog's price/description/images/shelf when present.
+    private func insert(name: String, shelf: String?, catalog: CatalogProduct?) {
         guard let storeTrimmed = ShoppingListLogic.normalized(storeName) else { return }
         let item = CDShoppingItem(context: context)
         item.name = name
         item.storeName = storeTrimmed
-        item.shelfLocation = shelfHint
+        item.shelfLocation = shelf
         item.catalogPrice = catalog?.priceText
         item.productDescription = catalog?.description
         item.imageURLsString = catalog?.imageURLs.map(\.absoluteString).joined(separator: "\n")
@@ -177,9 +159,8 @@ struct StoreAddView: View {
             item.list = list
         }
         try? context.save()
-        store.rememberShelf(product: name, store: storeTrimmed, shelf: shelf)
         addedCount += 1
-        productName = ""; shelf = ""; shelfWasRecalled = false; results = []
+        productName = ""; results = []
         productFocused = true
     }
 }

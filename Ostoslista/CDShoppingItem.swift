@@ -15,8 +15,14 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var imageURLsString: String?
 
     /// Catalog image URLs (stored newline-joined); empty for free-text items.
+    /// Repairs the earlier broken s-cloud modifier/extension so items added
+    /// before the fix still render.
     var imageURLs: [URL] {
-        (imageURLsString ?? "").split(separator: "\n").compactMap { URL(string: String($0)) }
+        (imageURLsString ?? "")
+            .split(separator: "\n")
+            .map { $0.replacingOccurrences(of: "w_240,h_240,c_fit", with: "w280h280@_q75") }
+            .map { $0.contains("cdn.s-cloud.fi") ? $0.replacingOccurrences(of: ".png", with: ".webp") : $0 }
+            .compactMap { URL(string: $0) }
     }
 
     /// A store-sourced item carries at least a store name.

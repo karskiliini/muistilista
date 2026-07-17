@@ -81,6 +81,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hakee automaattisesti kaupan valikoimasta: tulokset näyttävät hinnan,
   vertailuhinnan, kategorian ja kuvan, ja tuotteen voi napauttaa listalle.
   Muille kaupoille käytetään vapaasanalisäystä samassa lomakkeessa.
+  Jos päänäkymän hakukenttään on kirjoitettu tuotenimi kauppa-ikonia
+  painettaessa, se siirtyy suoraan kauppanäkymän hakukentän tekstiksi (ja
+  poistuu päänäkymästä). Kauppanäkymässä EI ole hyllypaikka-tekstikenttää:
+  hyllypaikkaa ei kirjoiteta käsin, vaan se noudetaan kaupan omasta datasta
+  (kaupat jotka sen tarjoavat) ja näytetään tuotteen ⓘ-näkymässä.
   Kaikki kaupat, joilla on rakennettavissa oleva haku, on toteutettu ja
   live-varmennettu (on-device-integraatiotestit hakevat oikeista
   rajapinnoista): S-ryhmä (s-kaupat GraphQL), Puuilo (Algolia, avain
@@ -95,19 +100,19 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla
   ei ole mitään extraa — pelkkä nimi.
-- **R25** 🔄 Hyllypaikan lähde riippuu kaupasta: ne kaupat jotka tarjoavat
-  hyllypaikan rajapinnassaan (esim. Motonet, rautakaupat), näyttävät sen
-  suoraan katalogituloksessa ja tallentavat sen riville. Ne jotka eivät
-  tarjoa (ruokakaupat S/Kesko), näyttävät kategorian, ja oikea hyllypaikka
-  tulee perheen hyllymuistista (R24). Ruokakatalogin hinnat ovat
-  viitteellisiä (edustava kauppa). Vapaasanalisäys ei muutu eikä monimutkaistu
+- **R25** ✅ Hyllypaikan lähde riippuu kaupasta: kaupat jotka tarjoavat
+  hyllypaikan (esim. K-Rauta) näyttävät sen hakutuloksessa ja tuotteen
+  ⓘ-näkymässä. Ruokakaupoille (S/Kesko) näytetään kategoria. Ruokakatalogin
+  hinnat ovat viitteellisiä (edustava kauppa). Kauppatuotteiden kuvat
+  haetaan oikeista kuva-CDN:istä (S-kaupoilla s-cloud, muoto
+  `w280h280@_q75` + webp). Vapaasanalisäys ei muutu eikä monimutkaistu
   tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
   haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
   kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)
-- **R24** ✅ Perheen hyllymuisti: kun tuotteelle annetaan hyllypaikka
-  kaupassa (käsin tai katalogista), pari (tuote, kauppa) → hyllypaikka
-  muistetaan, synkkautuu perheelle ja esitäytetään seuraavalla kerralla —
-  kaikissa kaupoissa, myös ilman katalogirajapintaa.
+- **R24** ✅ Hyllypaikkaa ei kirjoiteta käsin. Se tulee kaupan omasta
+  datasta niille kaupoille jotka sen tarjoavat (esim. K-Rauta: osasto +
+  hyllynumero) ja tallentuu tuotteelle. Muille kaupoille tuotteella ei ole
+  hyllypaikkaa. (Aiempi käsin syötettävä perheen hyllymuisti poistettu.)
 
 - **R27** ✅ Sovellus seuraa kaatumisia: uncaught-poikkeukset, fataalit
   signaalit (SIGABRT/SIGSEGV/…) ja Core Datan tietovaraston latausvirheet
