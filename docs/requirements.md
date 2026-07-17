@@ -235,5 +235,13 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   checklist-tyylinen aihe — valintaruutu vihreällä ✓, ostoskärry ja
   hintalappu, kunkin vieressä listarivi. Ikoni generoidaan koodista
   (`scripts/makeicon.swift`, CoreGraphics + SF Symbols) eikä sitä piirretä käsin.
+- **R34** ✅ Sovellus on valmisteltu App Store -jakelua varten: Release-buildi
+  kääntyy ja arkistoituu, `PrivacyInfo.xcprivacy` mukana (UserDefaults-syy
+  CA92.1, ei seurantaa, ei kerättyä dataa), `ITSAppUsesNonExemptEncryption=false`
+  (vain vakio-HTTPS), `LSApplicationCategoryType=public.app-category.shopping`,
+  ja push-ympäristö on konfiguraatiokohtainen (`APS_ENVIRONMENT`: development
+  Debugissa, production Releasessa/arkistossa). Varsinainen jakelu­allekirjoitus,
+  App Store Connect -tietue ja CloudKit-skeeman vienti tuotantoon tehdään
+  Applen työkaluilla (ks. `docs/app-store-checklist.md`).
 - **Rajaukset:** ei kategorioita, ei useita listoja, ei käyttäjäkohtaisia
   oikeuksia jaon sisällä, ei Android-versiota.

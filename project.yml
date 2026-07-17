@@ -21,13 +21,19 @@ targets:
           - iCloud.fi.maaranen.ostoslista
         com.apple.developer.icloud-services:
           - CloudKit
-        aps-environment: development
+        # development for local device builds, production for Release/archive
+        # (App Store & TestFlight use the production APNs environment).
+        aps-environment: $(APS_ENVIRONMENT)
     info:
       path: Ostoslista/Info.plist
       properties:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CKSharingSupported: true
+        # Only standard HTTPS encryption → exempt; avoids the per-upload
+        # export-compliance question in App Store Connect.
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.shopping
         NSLocationWhenInUseUsageDescription: "Sijaintia käytetään lähimmän K-ruokakaupan valintaan tuotehakuun."
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
@@ -48,6 +54,10 @@ targets:
         SUPPORTS_MACCATALYST: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 37SJ6TU5RP
+        APS_ENVIRONMENT: development
+      configs:
+        Release:
+          APS_ENVIRONMENT: production
   OstoslistaWidget:
     type: app-extension
     platform: iOS
