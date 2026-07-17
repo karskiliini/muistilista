@@ -92,6 +92,13 @@ struct ShoppingListView: View {
                             }
                             .id(item.objectID)
                             .opacity(recentlyMoved == item.objectID ? 0.5 : 1)
+                            // Each row is also a drop target for its store, so
+                            // there's a large reliable area to drop onto (List
+                            // section headers are flaky drop targets).
+                            .dropDestination(for: String.self) { uris, _ in
+                                moveDropped(uris, toStore: group.store)
+                                return true
+                            }
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
