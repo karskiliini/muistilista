@@ -29,6 +29,7 @@ targets:
       properties:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CKSharingSupported: true
         # Only standard HTTPS encryption → exempt; avoids the per-upload
         # export-compliance question in App Store Connect.
