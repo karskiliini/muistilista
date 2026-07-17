@@ -78,6 +78,19 @@ struct ShoppingRowView: View {
             Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
             Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
                 .disabled(item.quantity <= 1)
+            Menu {
+                ForEach(Stores.groups) { group in
+                    Section(group.name) {
+                        ForEach(group.stores, id: \.self) { name in
+                            Button(name) { moveToStore(name) }
+                        }
+                    }
+                }
+                Divider()
+                Button("Ei kauppaa") { moveToStore("") }
+            } label: {
+                Label("Siirrä kauppaan", systemImage: "arrow.left.arrow.right")
+            }
             Divider()
             Button(role: .destructive) { deleteSelf() } label: {
                 Label("Poista tuote", systemImage: "trash")
@@ -118,6 +131,12 @@ struct ShoppingRowView: View {
         let context = item.managedObjectContext
         context?.delete(item)
         try? context?.save()
+    }
+
+    /// Reassign the item to another store's group (empty = "Muut").
+    private func moveToStore(_ name: String) {
+        item.storeName = name.isEmpty ? nil : name
+        try? item.managedObjectContext?.save()
     }
 
     private var quantityDrag: some Gesture {

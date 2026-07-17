@@ -75,6 +75,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
+- **R31** ✅ Rivin pitkän painalluksen valikossa on "Siirrä kauppaan"
+  -alavalikko, joka tarjoaa pudotuslistan tuetuista kaupoista (sekä "Ei
+  kauppaa"). Valinta siirtää tuotteen sen kaupan ryhmään (R30).
 - **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
   (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
   sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan
