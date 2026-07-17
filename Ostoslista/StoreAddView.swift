@@ -108,7 +108,7 @@ struct StoreAddView: View {
             } else if !results.isEmpty {
                 ForEach(results) { product in
                     NavigationLink {
-                        CatalogProductDetailView(product: product) { addCatalog(product) }
+                        CatalogProductDetailView(product: product, storeName: storeName) { addCatalog(product) }
                     } label: {
                         CatalogRow(product: product)
                     }

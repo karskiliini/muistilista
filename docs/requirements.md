@@ -129,10 +129,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ei ole mitään extraa — pelkkä nimi.
 - **R25** ✅ Hyllypaikan lähde riippuu kaupasta: kaupat jotka tarjoavat
   hyllypaikan (esim. K-Rauta) näyttävät sen hakutuloksessa ja tuotteen
-  ⓘ-näkymässä. Ruokakaupoille (S/Kesko) näytetään kategoria. Ruokakatalogin
-  hinnat ovat viitteellisiä (edustava kauppa). Kauppatuotteiden kuvat
-  haetaan oikeista kuva-CDN:istä (S-kaupoilla s-cloud, muoto
-  `w280h280@_q75` + webp). Vapaasanalisäys ei muutu eikä monimutkaistu
+  ⓘ-näkymässä. **Motonetilla** hyllypaikka on tuotesivulla mutta vaatii
+  tavaratalon valinnan: käyttäjä valitsee Motonet-tavaratalonsa kerran
+  aidossa Motonet-näkymässä (jossa on oma lähin-tavaratalo-toiminto), ja
+  hyllypaikka ("Hyllypaikka 63, lattiapaikka") noudetaan tuotteen
+  ⓘ-näkymään piiloselaimella. Valinta muistetaan ja käyttäjä voi vaihtaa
+  sen. Ruokakaupoille (S/Kesko) näytetään kategoria. Ruokakatalogin hinnat
+  ovat viitteellisiä. Kauppatuotteiden kuvat haetaan oikeista
+  kuva-CDN:istä (S-kaupoilla s-cloud `w280h280@_q75` + webp). Vapaasanalisäys ei muutu eikä monimutkaistu
   tästä millään tavalla. Ketjukohtaiset tuotekatalogit (K-ryhmä ensin)
   haetaan rajapinnoista käytön mukaan ja välimuistitetaan; haku tarkentuu
   kategorioita napauttamalla. (Vaihe A toteutettu; katalogit B–D työn alla.)
