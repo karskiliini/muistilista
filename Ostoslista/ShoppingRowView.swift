@@ -46,10 +46,11 @@ struct ShoppingRowView: View {
     /// Custom store-move drag. Unlike `.draggable`/`.dropDestination` (which
     /// never engaged inside this List), a plain DragGesture responds to raw
     /// touch-move events, so it works on-device AND under simulated UI-test
-    /// gestures. Locations resolve in the parent List's "list" space so the
+    /// gestures. Locations resolve in `.global` (screen) space — the one space
+    /// that a List cell's gesture and the rows' frame readers agree on — so the
     /// parent can map the finger onto a store section.
     private var storeDrag: some Gesture {
-        DragGesture(minimumDistance: 6, coordinateSpace: .named("list"))
+        DragGesture(minimumDistance: 6, coordinateSpace: .global)
             .onChanged { onStoreDrag?(item.objectID, $0.location) }
             .onEnded { onStoreDrop?(item.objectID, $0.location) }
     }

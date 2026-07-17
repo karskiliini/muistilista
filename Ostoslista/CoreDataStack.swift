@@ -105,6 +105,13 @@ enum CoreDataStack {
         itemFromCatalog.attributeType = .booleanAttributeType
         itemFromCatalog.defaultValue = false
 
+        // Manual drag order within a store group. Default 0 for legacy rows;
+        // new rows seed it from their creation time so they append.
+        let itemSortOrder = NSAttributeDescription()
+        itemSortOrder.name = "sortOrder"
+        itemSortOrder.attributeType = .doubleAttributeType
+        itemSortOrder.defaultValue = 0.0
+
         let itemDesc = NSAttributeDescription()
         itemDesc.name = "productDescription"
         itemDesc.attributeType = .stringAttributeType
@@ -161,7 +168,7 @@ enum CoreDataStack {
 
         entity.properties = [name, isDone, createdAt, quantity, uuid, listRel,
                              itemStore, itemShelf, itemPrice, itemPriceValue, itemFromCatalog,
-                             itemDesc, itemImages]
+                             itemSortOrder, itemDesc, itemImages]
         listEntity.properties = [listName, listCreatedAt, itemsRel, memoriesRel]
         memoryEntity.properties = [memProduct, memStore, memShelf, memUpdatedAt, memListRel]
 

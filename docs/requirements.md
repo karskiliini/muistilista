@@ -80,27 +80,33 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   aloittaa vedon eikä avaa valikkoa). Valikossa: määrän lisäys/vähennys,
   "Siirrä kauppaan" -alavalikko (vain vapaatuotteille; tapa siirtää tuote
   kauppaan jota ei vielä ole listalla) ja "Poista tuote".
-- **R32** ✅ Tuotteen voi siirtää toiseen kauppaan myös vetämällä: rivin
-  vasemmassa laidassa on drag handle, josta tuotteen voi raahata ja pudottaa
-  toisen kaupan osioon (otsake korostuu pudotuskohteena). Vedon aikana
-  näytetään live-esikatselu tuotteesta (nimi, kuva, määrä), ja pudotuksen
-  jälkeen tuote **valuu animoituna** uuteen ryhmäänsä (himmennettynä siirron
-  ajan) ja näkymä keskittyy siihen.
-  Toteutus käyttää omaa `DragGesture`-elettä (ei SwiftUI:n
-  `.draggable`/`.dropDestination`-paria, joka ei koskaan käynnistynyt tämän
-  `List`in sisällä): sormen sijainti hit-testataan talteen kerättyihin
-  rivikehyksiin ("list"-koordinaatistossa) oikean kauppaosion löytämiseksi.
-  **Varmennettu automaattisella UI-testillä** (`OstoslistaUITests`), joka
-  simuloi painallus-ja-veto-eleen emulaattorissa ja tarkistaa, että vapaa
-  tuote siirtyy pudotettuun kauppaan.
+- **R32** ✅ Tuotteita voi järjestellä ja siirtää vetämällä rivin vasemman
+  laidan drag handlesta. Vedon aikana:
+  - vedettävä rivi **nousee** (skaalaus + varjo) ja **haamu-esikatselu**
+    (nimi, kuva, määrä) seuraa sormea;
+  - kun sormi on kelvollisen kohdan päällä, muut rivit **tekevät tilaa** ja
+    himmennetty rivi asettuu uuteen paikkaansa **reaaliaikaisesti**;
+  - **kategorian sisäinen järjestely**: samassa kaupassa pysyen rivi asettuu
+    sormen kohdan mukaiseen paikkaan (pysyvä järjestys `sortOrder`illa);
+  - **siirto kauppojen välillä**: pudotus toisen (näkyvän) kaupan osioon
+    siirtää tuotteen sinne;
+  - **"Ei kauppaa" -pudotusvyöhyke** on aina näkyvissä alimpana vedon aikana,
+    joten vapaatuotteen voi aina pudottaa takaisin kaupattomaksi;
+  - pudotuksen jälkeen näkymä keskittyy siirrettyyn tuotteeseen.
   **Kauppasidonnaiset (katalogista lisätyt) tuotteet ovat lukittuja omaan
-  kauppaansa** — niillä ei ole drag handlea eikä "Siirrä kauppaan"
-  -valikkoa (vain vapaatuotteita voi siirtää). Drag handlen pitkä painallus
-  aloittaa vedon (ei avaa context-menua); context-menu avautuu rivin muusta
-  osasta.
-  **Kesken (🔄): kategorian sisäinen järjestely vetämällä** — vaatii natiivin
-  `.onMove`-eleen, joka kilpailee handle-vedon, context-menun, määrävedon ja
-  pyyhkäisypoiston kanssa; toteutetaan ja viritetään laitteella erikseen.
+  kauppaansa** — niillä ei ole drag handlea (vain vapaatuotteita voi vetää).
+  Tuotteen voi siirtää mihin tahansa kauppaan — myös sellaiseen jota ei vielä
+  ole listalla — rivin "⋯"-valikon "Siirrä kauppaan" -kohdasta.
+  **Toteutus:** oma `DragGesture` (ei SwiftUI:n `.draggable`/`.dropDestination`
+  -paria, joka ei koskaan käynnistynyt tämän `List`in sisällä). Sormen sijainti
+  ja rivikehykset luetaan **samassa `.global`-koordinaatistossa** (List-solun
+  ele ja kehysten luku eivät sopineet nimetystä koordinaatistosta, mikä esti
+  sekä pudotuksen että haamun näkymisen). Sisäinen järjestely hit-testataan
+  vedon alussa otettuun kiinteään rivikehys-tilannekuvaan, ettei järjestely
+  ruoki itseään.
+  **Varmennettu automaattisilla UI-testeillä** (`OstoslistaUITests`), jotka
+  simuloivat painallus-ja-veto-eleen emulaattorissa: vapaa tuote siirtyy
+  kauppaan, järjestyy ryhmänsä sisällä ja palautuu kaupattomaksi.
 - **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
   (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
   sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan

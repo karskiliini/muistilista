@@ -7,11 +7,40 @@ private struct FixtureItem: ShoppingItemLike {
     let isDone: Bool
     let createdAt: Date
     var name: String
+    var sortOrder: Double = 0
 }
 
 final class ShoppingListLogicTests: XCTestCase {
-    private func item(_ name: String, done: Bool, at seconds: TimeInterval = 0) -> FixtureItem {
-        FixtureItem(isDone: done, createdAt: Date(timeIntervalSince1970: seconds), name: name)
+    private func item(_ name: String, done: Bool, at seconds: TimeInterval = 0,
+                      order: Double = 0) -> FixtureItem {
+        FixtureItem(isDone: done, createdAt: Date(timeIntervalSince1970: seconds),
+                    name: name, sortOrder: order)
+    }
+
+    func testSortedHonorsManualOrderBeforeCreatedAt() {
+        // Manual order wins over creation time; both are unchecked.
+        let result = ShoppingListLogic.sorted([
+            item("kahvi", done: false, at: 1, order: 2),
+            item("maito", done: false, at: 2, order: 0),
+            item("leipä", done: false, at: 3, order: 1),
+        ])
+        XCTAssertEqual(result.map(\.name), ["maito", "leipä", "kahvi"])
+    }
+
+    func testReorderedMovesItemToIndex() {
+        XCTAssertEqual(ShoppingListLogic.reordered(["a", "b", "c"], move: "a", to: 2),
+                       ["b", "c", "a"])
+        XCTAssertEqual(ShoppingListLogic.reordered(["a", "b", "c"], move: "c", to: 0),
+                       ["c", "a", "b"])
+        XCTAssertEqual(ShoppingListLogic.reordered(["a", "b", "c"], move: "b", to: 1),
+                       ["a", "b", "c"])
+    }
+
+    func testReorderedClampsAndIgnoresMissing() {
+        XCTAssertEqual(ShoppingListLogic.reordered(["a", "b"], move: "a", to: 99),
+                       ["b", "a"])
+        XCTAssertEqual(ShoppingListLogic.reordered(["a", "b"], move: "z", to: 0),
+                       ["a", "b"])
     }
 
     func testNormalizedTrimsWhitespace() {

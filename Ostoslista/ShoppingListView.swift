@@ -23,19 +23,17 @@ struct ShoppingListView: View {
     @State private var pendingCrash: CrashReport?
     @State private var dropDebug = "d0m0"   // UI-test drop diagnostics
 
-    // Custom store drag: the item being dragged, the finger position, and the
-    // captured vertical extents of every row (all in the List's "list" space).
-    @State private var dragItem: NSManagedObjectID?
-    @State private var dragLocation: CGPoint = .zero
-    @State private var rowFrames: [RowFrame] = []
+    // Custom store drag. All positions are in the List's "list" space.
+    @State private var dragItem: NSManagedObjectID?          // item being dragged
+    @State private var dragLocation: CGPoint = .zero          // finger position
+    @State private var dragStartStore = ""                    // its store at grab time
+    @State private var dragSnapshot: [CGFloat] = []           // sibling row midYs (fixed)
+    @State private var dragTargetStore: String?               // live drop store
+    @State private var dragTargetIndex = 0                    // live drop slot in store
+    @State private var rowFrames: [RowFrame] = []             // live row extents
 
     private var isUITest: Bool { ProcessInfo.processInfo.arguments.contains("-UITestReset") }
-
-    /// The store whose rows the finger is currently over (nil = not dragging).
-    private var hoverStore: String? {
-        guard dragItem != nil else { return nil }
-        return store(atY: dragLocation.y)
-    }
+    private var isDragging: Bool { dragItem != nil }
 
     /// Map a Y position in "list" space onto a store, clamping to the nearest
     /// section when the finger is above the first or below the last row.
@@ -50,6 +48,15 @@ struct ShoppingListView: View {
 
     private func itemByID(_ id: NSManagedObjectID) -> CDShoppingItem? {
         items.first { $0.objectID == id }
+    }
+
+    /// A signature that changes whenever the rendered layout should re-animate:
+    /// each item's store/checked/order, plus the live drag target.
+    private var layoutSignature: String {
+        let base = displayGroups.flatMap { g in
+            g.items.map { "\($0.objectID.uriRepresentation().lastPathComponent):\(g.store):\($0.isDone ? 1 : 0)" }
+        }.joined(separator: "|")
+        return base + "#\(dragTargetStore ?? "-"):\(dragTargetIndex)"
     }
 
     private var appVersion: String {
@@ -80,14 +87,36 @@ struct ShoppingListView: View {
             }
     }
 
-    private var grandTotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
-
-    /// Changes whenever any item's store/checked state changes, so the List
-    /// animates moves between groups.
-    private var groupSignature: String {
-        items.map { "\($0.objectID.uriRepresentation().lastPathComponent):\($0.storeName ?? "-"):\($0.isDone ? 1 : 0)" }
-            .sorted().joined(separator: "|")
+    /// The groups the List renders. While dragging a (free) item this differs
+    /// from the stored grouping: the dragged item is shown at its live target
+    /// position (so rows make room for it in real time), and a "Muut"
+    /// (no-store) drop zone is always surfaced at the bottom — even when empty
+    /// — so the item can always be dropped back to no store.
+    private var displayGroups: [StoreGroup] {
+        // Where each item displays; the dragged one follows the finger.
+        func displayStore(_ item: CDShoppingItem) -> String {
+            if isDragging, item.objectID == dragItem, let target = dragTargetStore { return target }
+            return item.storeName ?? ""
+        }
+        var byStore = Dictionary(grouping: Array(items)) { displayStore($0) }
+        if isDragging, byStore[""] == nil { byStore[""] = [] }   // always offer "Ei kauppaa"
+        return byStore.map { key, groupItems -> StoreGroup in
+            var ordered = ShoppingListLogic.sorted(groupItems)
+            // Slot the dragged item into its live target index within its store.
+            if isDragging, let dragItem, dragTargetStore == key,
+               let idx = ordered.firstIndex(where: { $0.objectID == dragItem }) {
+                let moved = ordered.remove(at: idx)
+                ordered.insert(moved, at: max(0, min(dragTargetIndex, ordered.count)))
+            }
+            return StoreGroup(store: key, items: ordered)
+        }
+        .sorted { a, b in
+            if a.store.isEmpty != b.store.isEmpty { return !a.store.isEmpty } // "Muut" last
+            return a.store.localizedCaseInsensitiveCompare(b.store) == .orderedAscending
+        }
     }
+
+    private var grandTotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
 
     var body: some View {
         NavigationStack {
@@ -113,8 +142,12 @@ struct ShoppingListView: View {
                         .buttonStyle(.borderless)
                     }
                 }
-                ForEach(storeGroups) { group in
+                ForEach(displayGroups) { group in
                     Section {
+                        if group.items.isEmpty {
+                            // Empty drop zone shown only during a drag.
+                            DropZonePlaceholder(store: group.store)
+                        }
                         ForEach(group.items) { item in
                             ShoppingRowView(
                                 item: item,
@@ -122,25 +155,31 @@ struct ShoppingListView: View {
                                 onStoreDrag: handleStoreDrag,
                                 onStoreDrop: handleStoreDrop)
                             .id(item.objectID)
-                            .opacity(dragItem == item.objectID ? 0.35
+                            .opacity(dragItem == item.objectID ? 0.5
                                      : (recentlyMoved == item.objectID ? 0.5 : 1))
-                            // Report each row's vertical extent so a drag can be
-                            // hit-tested against store sections.
+                            // Lift the dragged row so it reads as picked up.
+                            .scaleEffect(dragItem == item.objectID ? 1.03 : 1, anchor: .leading)
+                            .shadow(color: .black.opacity(dragItem == item.objectID ? 0.18 : 0),
+                                    radius: 6, y: 3)
+                            .zIndex(dragItem == item.objectID ? 1 : 0)
+                            // Report each row's extent so the drag can be
+                            // hit-tested against store sections and slots.
                             .background(GeometryReader { geo in
                                 Color.clear.preference(
                                     key: RowFrameKey.self,
-                                    value: [RowFrame(store: group.store,
-                                                     rect: geo.frame(in: .named("list")))])
+                                    value: [RowFrame(store: group.store, id: item.objectID,
+                                                     rect: geo.frame(in: .global))])
                             })
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
                         StoreGroupHeader(
                             title: group.title,
-                            countText: "\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)",
-                            highlighted: dragItem != nil && hoverStore == group.store)
+                            countText: group.items.isEmpty ? ""
+                                : "\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)",
+                            highlighted: isDragging && dragTargetStore == group.store)
                     } footer: {
-                        if let subtotal = ShoppingListLogic.priceText(group.subtotal) {
+                        if !isDragging, let subtotal = ShoppingListLogic.priceText(group.subtotal) {
                             HStack {
                                 Spacer()
                                 Text("Yhteensä \(subtotal)").foregroundStyle(.secondary)
@@ -148,7 +187,7 @@ struct ShoppingListView: View {
                         }
                     }
                 }
-                if let total = ShoppingListLogic.priceText(grandTotal) {
+                if !isDragging, let total = ShoppingListLogic.priceText(grandTotal) {
                     Section {
                         HStack {
                             Text("Kaikki kaupat yhteensä").fontWeight(.semibold)
@@ -158,19 +197,23 @@ struct ShoppingListView: View {
                     }
                 }
             }
-            // Animate section/row changes — including an item moving to a new
-            // store group — by keying on a signature that captures store,
-            // checked state and order for every item.
-            .animation(.spring(duration: 0.35), value: groupSignature)
-            .coordinateSpace(name: "list")
+            // Animate rows making room as the drag target moves, and items
+            // flowing between store groups, by keying on the layout signature.
+            .animation(.spring(duration: 0.3), value: layoutSignature)
             .onPreferenceChange(RowFrameKey.self) { rowFrames = $0 }
-            // Floating preview of the dragged item, tracking the finger.
-            .overlay(alignment: .topLeading) {
+            // Floating ghost of the dragged item, tracking the finger. The
+            // finger position is in global space, so convert it into this
+            // overlay's local space via its own global origin.
+            .overlay {
                 if let dragItem, let item = itemByID(dragItem) {
-                    DragPreview(item: item)
-                        .position(x: dragLocation.x, y: dragLocation.y)
-                        .allowsHitTesting(false)
-                        .transition(.opacity)
+                    GeometryReader { geo in
+                        let origin = geo.frame(in: .global).origin
+                        DragPreview(item: item)
+                            .position(x: dragLocation.x - origin.x,
+                                      y: dragLocation.y - origin.y)
+                    }
+                    .allowsHitTesting(false)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
                 }
             }
             .onChange(of: scrollTarget) { _, target in
@@ -314,28 +357,66 @@ struct ShoppingListView: View {
         save()
     }
 
-    /// Drag in progress: remember the item and follow the finger.
+    /// Drag in progress: on the first callback capture a fixed snapshot of the
+    /// item's sibling positions (so reordering never feeds back into itself),
+    /// then update the live target as the finger moves.
     private func handleStoreDrag(_ id: NSManagedObjectID, _ location: CGPoint) {
-        if dragItem != id { dragItem = id }
+        if dragItem != id {
+            dragItem = id
+            dragStartStore = itemByID(id)?.storeName ?? ""
+            dragSnapshot = rowFrames
+                .filter { $0.store == dragStartStore }
+                .filter { frame in frame.id.map { !$0.isEqual(id) } ?? false }
+                .map(\.rect.midY)
+                .sorted()
+            dragTargetStore = dragStartStore
+        }
         dragLocation = location
+        updateDragTarget(location)
     }
 
-    /// Drag released: move the item to whichever store section it was dropped
-    /// on, then center the moved row.
+    /// Recompute where the item would land: which store section the finger is
+    /// over, and — when that's the item's own store — the slot within it.
+    private func updateDragTarget(_ location: CGPoint) {
+        let target = store(atY: location.y) ?? dragStartStore
+        dragTargetStore = target
+        if target == dragStartStore {
+            // Reorder within the original store using the fixed snapshot.
+            dragTargetIndex = dragSnapshot.filter { $0 < location.y }.count
+        } else {
+            // Into another store: append at the end.
+            dragTargetIndex = Int.max
+        }
+    }
+
+    /// Drag released: commit the live target to the data model.
     private func handleStoreDrop(_ id: NSManagedObjectID, _ location: CGPoint) {
-        let target = store(atY: location.y)
-        withAnimation { dragItem = nil }
-        let moved = target.map { moveItem(id, toStore: $0) } ?? 0
-        if isUITest { dropDebug = "d\(target == nil ? 0 : 1)m\(moved)" }
+        updateDragTarget(location)
+        let target = dragTargetStore ?? dragStartStore
+        let index = dragTargetIndex
+        let moved = commitDrag(id: id, toStore: target, index: index)
+        withAnimation(.spring(duration: 0.3)) { endDrag() }
+        if isUITest {
+            let idx = index == Int.max ? -1 : index
+            dropDebug = "store:\(target.isEmpty ? "-" : target):i\(idx):m\(moved)"
+        }
     }
 
-    /// Reassign an item to a store ("" = "Muut"); catalog items stay locked.
+    /// Reassign the item to `store` and renumber that group so the item sits at
+    /// `index`. Catalog items stay locked. Returns 1 when it moved.
     @discardableResult
-    private func moveItem(_ id: NSManagedObjectID, toStore store: String) -> Int {
-        guard let item = try? context.existingObject(with: id) as? CDShoppingItem,
-              item.canChangeStore else { return 0 }
+    private func commitDrag(id: NSManagedObjectID, toStore store: String, index: Int) -> Int {
+        guard let item = itemByID(id), item.canChangeStore else { return 0 }
         item.storeName = store.isEmpty ? nil : store
-        save()   // the List's groupSignature animation flows the row over
+        // Renumber the destination group so the drag order persists.
+        let groupIDs = ShoppingListLogic
+            .sorted(Array(items).filter { ($0.storeName ?? "") == store })
+            .map(\.objectID)
+        let newOrder = ShoppingListLogic.reordered(groupIDs, move: id, to: index)
+        for (position, oid) in newOrder.enumerated() {
+            itemByID(oid)?.sortOrder = Double(position)
+        }
+        save()
         scrollTarget = id
         recentlyMoved = id
         Task {
@@ -343,6 +424,13 @@ struct ShoppingListView: View {
             if recentlyMoved == id { recentlyMoved = nil }
         }
         return 1
+    }
+
+    private func endDrag() {
+        dragItem = nil
+        dragTargetStore = nil
+        dragSnapshot = []
+        dragTargetIndex = 0
     }
 
     private func clearChecked() {
@@ -375,17 +463,47 @@ private struct StoreGroupHeader: View {
     }
 }
 
-/// A row's store and its vertical extent in "list" space, collected so a
-/// store drag can be hit-tested against the sections.
+/// A row's store, item id (nil for an empty drop zone) and its vertical extent
+/// in "list" space, collected so a store drag can be hit-tested against the
+/// sections and slots.
 private struct RowFrame: Equatable {
     let store: String
+    let id: NSManagedObjectID?
     let rect: CGRect
+
+    static func == (a: RowFrame, b: RowFrame) -> Bool {
+        a.store == b.store && a.rect == b.rect
+            && (a.id?.isEqual(b.id) ?? (b.id == nil))
+    }
 }
 
 private struct RowFrameKey: PreferenceKey {
     static var defaultValue: [RowFrame] = []
     static func reduce(value: inout [RowFrame], nextValue: () -> [RowFrame]) {
         value.append(contentsOf: nextValue())
+    }
+}
+
+/// Empty store section shown only during a drag, so a free item can be dropped
+/// into a store that has no items yet — or back to "Muut" (no store).
+private struct DropZonePlaceholder: View {
+    let store: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "tray.and.arrow.down")
+            Text("Pudota tähän").font(.subheadline)
+            Spacer()
+        }
+        .foregroundStyle(.secondary)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .background(GeometryReader { geo in
+            Color.clear.preference(
+                key: RowFrameKey.self,
+                value: [RowFrame(store: store, id: nil, rect: geo.frame(in: .global))])
+        })
     }
 }
 

@@ -5,6 +5,9 @@ import Foundation
 protocol ShoppingItemLike {
     var isDone: Bool { get }
     var createdAt: Date { get }
+    /// Manual drag order within a store group. Ties fall back to createdAt so
+    /// items never reordered keep their original (creation) order.
+    var sortOrder: Double { get }
 }
 
 enum ShoppingListLogic {
@@ -14,12 +17,24 @@ enum ShoppingListLogic {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// Unchecked first; within each group oldest first.
+    /// Unchecked first; then by manual drag order; oldest first on ties.
     static func sorted<Item: ShoppingItemLike>(_ items: [Item]) -> [Item] {
         items.sorted {
             if $0.isDone != $1.isDone { return !$0.isDone }
+            if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
             return $0.createdAt < $1.createdAt
         }
+    }
+
+    /// Move `id` to `index` within `ids`, returning the new order. `index` is
+    /// the desired final slot among the *other* items (0 = first), clamped to
+    /// the valid range. A no-op when `id` isn't present.
+    static func reordered<ID: Equatable>(_ ids: [ID], move id: ID, to index: Int) -> [ID] {
+        guard ids.contains(id) else { return ids }
+        var rest = ids.filter { $0 != id }
+        let clamped = max(0, min(index, rest.count))
+        rest.insert(id, at: clamped)
+        return rest
     }
 
     static func checked<Item: ShoppingItemLike>(_ items: [Item]) -> [Item] {

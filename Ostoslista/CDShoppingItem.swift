@@ -13,6 +13,7 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var catalogPrice: String?
     @NSManaged var priceValue: Double        // 0 for free-text items
     @NSManaged var fromCatalog: Bool         // true = a specific store's product
+    @NSManaged var sortOrder: Double         // manual drag order within a group
 
     /// Catalog products are tied to their store and can't be moved; only
     /// free-text items can change store.
@@ -39,8 +40,12 @@ final class CDShoppingItem: NSManagedObject {
 
     override func awakeFromInsert() {
         super.awakeFromInsert()
-        setPrimitiveValue(Date.now, forKey: "createdAt")
+        let now = Date.now
+        setPrimitiveValue(now, forKey: "createdAt")
         setPrimitiveValue(UUID(), forKey: "uuid")
+        // Seed the drag order from creation time so new items append below
+        // existing ones (legacy rows default to 0) yet keep a stable order.
+        setPrimitiveValue(now.timeIntervalSinceReferenceDate, forKey: "sortOrder")
     }
 
     @nonobjc class func fetchRequest() -> NSFetchRequest<CDShoppingItem> {
