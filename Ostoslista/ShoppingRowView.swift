@@ -18,6 +18,17 @@ struct ShoppingRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Drag handle: pick the item up and drop it on a store section to
+            // move it. Long-press elsewhere still opens the context menu.
+            Image(systemName: "line.3.horizontal")
+                .font(.callout)
+                .foregroundStyle(.tertiary)
+                .draggable(item.objectID.uriRepresentation().absoluteString) {
+                    Text(item.name)
+                        .padding(8)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                }
+                .accessibilityLabel("Siirrä vetämällä")
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
             // Store items reserve a fixed leading slot so their names align

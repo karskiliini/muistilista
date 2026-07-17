@@ -77,7 +77,13 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   laitteella tehdyistä muutoksista ei ilmoiteta.
 - **R31** ✅ Rivin pitkän painalluksen valikossa on "Siirrä kauppaan"
   -alavalikko, joka tarjoaa pudotuslistan tuetuista kaupoista (sekä "Ei
-  kauppaa"). Valinta siirtää tuotteen sen kaupan ryhmään (R30).
+  kauppaa"). Valinta siirtää tuotteen sen kaupan ryhmään (R30). Tämä on
+  tapa siirtää tuote kauppaan, jota ei vielä ole listalla.
+- **R32** ✅ Tuotteen voi siirtää toiseen kauppaan myös vetämällä: rivin
+  vasemmassa laidassa on drag handle, josta tuotteen voi raahata ja pudottaa
+  toisen kaupan osioon (otsake korostuu pudotuskohteena). Pudotuksen jälkeen
+  näkymä keskittyy siirrettyyn tuotteeseen. Pitkä painallus avaa edelleen
+  context-menun (drag handle erottaa vedon painalluksesta).
 - **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
   (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
   sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan

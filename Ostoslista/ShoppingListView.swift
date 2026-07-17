@@ -86,12 +86,10 @@ struct ShoppingListView: View {
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
-                        HStack {
-                            Text(group.title)
-                            Spacer()
-                            Text("\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)")
-                                .foregroundStyle(.secondary)
-                        }
+                        StoreGroupHeader(
+                            title: group.title,
+                            countText: "\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)",
+                            onDropURIs: { uris in moveDropped(uris, toStore: group.store) })
                     } footer: {
                         if let subtotal = ShoppingListLogic.priceText(group.subtotal) {
                             HStack {
@@ -252,6 +250,22 @@ struct ShoppingListView: View {
         save()
     }
 
+    /// Reassign dropped items (carried as objectID URI strings) to a store,
+    /// then center the moved item.
+    private func moveDropped(_ uris: [String], toStore store: String) {
+        guard let coordinator = context.persistentStoreCoordinator else { return }
+        var moved: NSManagedObjectID?
+        for uri in uris {
+            guard let url = URL(string: uri),
+                  let oid = coordinator.managedObjectID(forURIRepresentation: url),
+                  let item = try? context.existingObject(with: oid) as? CDShoppingItem else { continue }
+            item.storeName = store.isEmpty ? nil : store
+            moved = item.objectID
+        }
+        save()
+        if let moved { scrollTarget = moved }
+    }
+
     private func clearChecked() {
         for item in ShoppingListLogic.checked(Array(items)) { context.delete(item) }
         save()
@@ -259,5 +273,29 @@ struct ShoppingListView: View {
 
     private func save() {
         try? context.save()
+    }
+}
+
+/// Store section header that highlights when an item is dragged over it and
+/// reassigns the dropped item to this store.
+private struct StoreGroupHeader: View {
+    let title: String
+    let countText: String
+    let onDropURIs: ([String]) -> Void
+    @State private var targeted = false
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text(countText).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+        .background(targeted ? Color.accentColor.opacity(0.18) : .clear,
+                    in: RoundedRectangle(cornerRadius: 6))
+        .dropDestination(for: String.self) { uris, _ in
+            onDropURIs(uris)
+            return true
+        } isTargeted: { targeted = $0 }
     }
 }
