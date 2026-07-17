@@ -22,6 +22,10 @@
 	<string>1</string>
 	<key>CKSharingSupported</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.shopping</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Sijaintia käytetään lähimmän K-ruokakaupan valintaan tuotehakuun.</string>
 	<key>UIBackgroundModes</key>
