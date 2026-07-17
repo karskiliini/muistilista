@@ -96,17 +96,23 @@ final class DragMoveUITests: XCTestCase {
                        "maito should have lost its store (debug: \(element("debug-drop").label))")
     }
 
-    /// Catalog (store-bound) items must not be draggable between stores — they
-    /// have no drag handle at all.
-    func testCatalogItemHasNoDragHandle() throws {
-        launch(seed: "juusto|Prisma|cat;maito|Prisma")
+    /// A catalog item can be reordered (it has a handle) but must NOT move to
+    /// another store — dragging it onto another store's section leaves it put.
+    func testCatalogItemStaysInOwnStore() throws {
+        launch(seed: "ruuvi|K-Rauta|cat;maito|Prisma")
 
-        // Both items are in the Prisma section...
-        XCTAssertTrue(element("store-juusto").waitForExistence(timeout: 5), "juusto not shown")
-        // ...but only the free-text one has a handle.
-        XCTAssertTrue(element("handle-maito").exists, "free item should have a handle")
-        XCTAssertFalse(element("handle-juusto").exists,
-                       "catalog item must not have a drag handle")
+        let ruuviStore = element("store-ruuvi")
+        XCTAssertTrue(ruuviStore.waitForExistence(timeout: 5), "ruuvi not shown")
+        XCTAssertTrue(ruuviStore.label.contains("K-Rauta"), "setup: ruuvi in K-Rauta")
+
+        // It has a handle (reorder allowed)...
+        let handle = element("handle-ruuvi")
+        XCTAssertTrue(handle.waitForExistence(timeout: 5), "catalog item should have a handle")
+        // ...but dragging it onto Prisma must not move it there.
+        handle.press(forDuration: 1.0, thenDragTo: element("store-maito"))
+
+        XCTAssertTrue(element("store-ruuvi").label.contains("K-Rauta"),
+                      "catalog item must stay in its own store (got: \(element("store-ruuvi").label))")
     }
 
     /// Regression: scrubbing a catalog item's quantity high used to hang the

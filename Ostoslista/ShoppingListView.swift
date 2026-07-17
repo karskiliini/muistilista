@@ -27,7 +27,11 @@ struct ShoppingListView: View {
     @State private var dragItem: NSManagedObjectID?          // item being dragged
     @State private var dragLocation: CGPoint = .zero          // finger position
     @State private var dragStartStore = ""                    // its store at grab time
-    @State private var dragSnapshot: [CGFloat] = []           // sibling row midYs (fixed)
+    // Fixed snapshot of every OTHER row's (store, midY), captured once the
+    // drag layout settles. Hit-testing against this — not the live, shifting
+    // layout — lets the item move live between sections without the finger's
+    // target oscillating (which hung the app).
+    @State private var dragSlots: [DragSlot] = []
     @State private var dragTargetStore: String?               // live drop store
     @State private var dragTargetIndex = 0                    // live drop slot in store
     // Live row extents, held in a reference type so frame updates (which fire
@@ -38,18 +42,6 @@ struct ShoppingListView: View {
 
     private var isUITest: Bool { ProcessInfo.processInfo.arguments.contains("-UITestReset") }
     private var isDragging: Bool { dragItem != nil }
-
-    /// Map a Y position in "list" space onto a store, clamping to the nearest
-    /// section when the finger is above the first or below the last row.
-    private func store(atY y: CGFloat) -> String? {
-        let rowFrames = frames.rows
-        if let hit = rowFrames.first(where: { $0.rect.minY <= y && y <= $0.rect.maxY }) {
-            return hit.store
-        }
-        guard let first = rowFrames.min(by: { $0.rect.midY < $1.rect.midY }),
-              let last = rowFrames.max(by: { $0.rect.midY < $1.rect.midY }) else { return nil }
-        return y < first.rect.minY ? first.store : last.store
-    }
 
     private func itemByID(_ id: NSManagedObjectID) -> CDShoppingItem? {
         items.first { $0.objectID == id }
@@ -93,21 +85,22 @@ struct ShoppingListView: View {
             }
     }
 
-    /// The groups the List renders. While dragging, the item stays in its OWN
-    /// store section — reordering live within it — but does NOT move into a
-    /// different section until the drop. Live cross-section moves relayout the
-    /// List, which shifts the finger's hit-test and makes the item oscillate
-    /// between sections (a hang); the target section is instead just
-    /// highlighted, with the ghost following the finger. A "Muut" (no-store)
-    /// drop zone is always surfaced at the bottom.
+    /// The groups the List renders. While dragging, the item is shown live at
+    /// its target position — sliding to a new slot within its category or into
+    /// another category — so the move is visible in real time. This is safe
+    /// because the target is hit-tested against a FIXED snapshot (`dragSlots`),
+    /// so the item moving can't shift the hit-test and oscillate. A "Muut"
+    /// (no-store) drop zone is always surfaced at the bottom during a drag.
     private var displayGroups: [StoreGroup] {
-        var byStore = Dictionary(grouping: Array(items)) { $0.storeName ?? "" }
+        func displayStore(_ item: CDShoppingItem) -> String {
+            if isDragging, item.objectID == dragItem, let target = dragTargetStore { return target }
+            return item.storeName ?? ""
+        }
+        var byStore = Dictionary(grouping: Array(items)) { displayStore($0) }
         if isDragging, byStore[""] == nil { byStore[""] = [] }   // always offer "Ei kauppaa"
-        // Live reorder only applies within the dragged item's own store.
-        let reorderStore = (isDragging && dragTargetStore == dragStartStore) ? dragStartStore : nil
         return byStore.map { key, groupItems -> StoreGroup in
             var ordered = ShoppingListLogic.sorted(groupItems)
-            if let reorderStore, reorderStore == key, let dragItem,
+            if isDragging, let dragItem, dragTargetStore == key,
                let idx = ordered.firstIndex(where: { $0.objectID == dragItem }) {
                 let moved = ordered.remove(at: idx)
                 ordered.insert(moved, at: max(0, min(dragTargetIndex, ordered.count)))
@@ -365,60 +358,72 @@ struct ShoppingListView: View {
         save()
     }
 
-    /// Drag in progress: on the first callback capture a fixed snapshot of the
-    /// item's sibling positions (so reordering never feeds back into itself),
-    /// then update the live target as the finger moves.
+    /// Drag in progress. The first callback just records the item; the layout
+    /// then re-lays-out into drag mode, and on the next callback we capture the
+    /// fixed slot snapshot. Every later callback maps the finger onto a target
+    /// using that fixed snapshot, so moving the item never shifts the hit-test.
     private func handleStoreDrag(_ id: NSManagedObjectID, _ location: CGPoint) {
+        dragLocation = location
         if dragItem != id {
             dragItem = id
             dragStartStore = itemByID(id)?.storeName ?? ""
-            dragSnapshot = frames.rows
-                .filter { $0.store == dragStartStore }
-                .filter { row in row.id.map { !$0.isEqual(id) } ?? false }
-                .map(\.rect.midY)
-                .sorted()
+            dragSlots = []
             dragTargetStore = dragStartStore
+            dragTargetIndex = currentIndex(of: id, inStore: dragStartStore)
+            return
         }
-        dragLocation = location
-        updateDragTarget(location)
+        if dragSlots.isEmpty { dragSlots = captureSlots(excluding: id) }
+        updateDragTarget(id: id, at: location)
     }
 
-    /// Recompute where the item would land: which store section the finger is
-    /// over, and — when that's the item's own store — the slot within it.
-    private func updateDragTarget(_ location: CGPoint) {
-        let target = store(atY: location.y) ?? dragStartStore
-        dragTargetStore = target
-        if target == dragStartStore {
-            // Reorder within the original store using the fixed snapshot.
-            dragTargetIndex = dragSnapshot.filter { $0 < location.y }.count
-        } else {
-            // Into another store: append at the end.
-            dragTargetIndex = Int.max
-        }
+    /// The item's current position within its store (so the drag starts with
+    /// the row exactly where it already is).
+    private func currentIndex(of id: NSManagedObjectID, inStore store: String) -> Int {
+        ShoppingListLogic.sorted(Array(items).filter { ($0.storeName ?? "") == store })
+            .firstIndex { $0.objectID == id } ?? 0
+    }
+
+    /// Snapshot of every other row's (store, midY) — plus empty drop zones —
+    /// in the drag-mode layout. Fixed for the whole drag.
+    private func captureSlots(excluding id: NSManagedObjectID) -> [DragSlot] {
+        frames.rows
+            .filter { $0.id.map { !$0.isEqual(id) } ?? true }   // keep others + zones
+            .map { DragSlot(store: $0.store, midY: $0.rect.midY) }
+            .sorted { $0.midY < $1.midY }
+    }
+
+    /// Map the finger onto a target store + slot using the FIXED snapshot.
+    /// Catalog items are pinned to their own store (reorder only).
+    private func updateDragTarget(id: NSManagedObjectID, at location: CGPoint) {
+        guard !dragSlots.isEmpty else { return }
+        let canChange = itemByID(id)?.canChangeStore ?? false
+        let above = dragSlots.filter { $0.midY < location.y }
+        let rawStore = above.last?.store ?? dragSlots.first?.store ?? dragStartStore
+        let store = canChange ? rawStore : dragStartStore
+        dragTargetStore = store
+        dragTargetIndex = dragSlots.filter { $0.store == store && $0.midY < location.y }.count
     }
 
     /// Drag released: commit the live target to the data model.
     private func handleStoreDrop(_ id: NSManagedObjectID, _ location: CGPoint) {
-        updateDragTarget(location)
+        if dragSlots.isEmpty { dragSlots = captureSlots(excluding: id) }
+        updateDragTarget(id: id, at: location)
         let target = dragTargetStore ?? dragStartStore
         let index = dragTargetIndex
         let moved = commitDrag(id: id, toStore: target, index: index)
         withAnimation(.spring(duration: 0.3)) { endDrag() }
-        if isUITest {
-            let idx = index == Int.max ? -1 : index
-            dropDebug = "store:\(target.isEmpty ? "-" : target):i\(idx):m\(moved)"
-        }
+        if isUITest { dropDebug = "store:\(target.isEmpty ? "-" : target):i\(index):m\(moved)" }
     }
 
-    /// Reassign the item to `store` and renumber that group so the item sits at
-    /// `index`. Catalog items stay locked. Returns 1 when it moved.
+    /// Move the item to `store` (a catalog item stays in its own store) and
+    /// renumber that group so the drag order persists.
     @discardableResult
     private func commitDrag(id: NSManagedObjectID, toStore store: String, index: Int) -> Int {
-        guard let item = itemByID(id), item.canChangeStore else { return 0 }
-        item.storeName = store.isEmpty ? nil : store
-        // Renumber the destination group so the drag order persists.
+        guard let item = itemByID(id) else { return 0 }
+        let dest = item.canChangeStore ? store : (item.storeName ?? "")
+        item.storeName = dest.isEmpty ? nil : dest
         let groupIDs = ShoppingListLogic
-            .sorted(Array(items).filter { ($0.storeName ?? "") == store })
+            .sorted(Array(items).filter { ($0.storeName ?? "") == dest })
             .map(\.objectID)
         let newOrder = ShoppingListLogic.reordered(groupIDs, move: id, to: index)
         for (position, oid) in newOrder.enumerated() {
@@ -437,7 +442,7 @@ struct ShoppingListView: View {
     private func endDrag() {
         dragItem = nil
         dragTargetStore = nil
-        dragSnapshot = []
+        dragSlots = []
         dragTargetIndex = 0
     }
 
@@ -497,6 +502,14 @@ private struct RowFrameKey: PreferenceKey {
 /// them on demand; `body` never does.
 private final class RowFrameStore {
     var rows: [RowFrame] = []
+}
+
+/// A fixed drop slot captured at drag start: a store section and a row's
+/// vertical midpoint. The finger is hit-tested against these (never the live
+/// layout), so the dragged item can slide freely without shifting the target.
+private struct DragSlot {
+    let store: String
+    let midY: CGFloat
 }
 
 /// Empty store section shown only during a drag, so a free item can be dropped

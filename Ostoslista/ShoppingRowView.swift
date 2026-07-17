@@ -23,20 +23,19 @@ struct ShoppingRowView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            // Slim drag handle — only for free-text items, since catalog
-            // products are tied to their store and can't move. A narrow grip
-            // keeps rows compact; the tap area stays tall enough to grab and
-            // still wins the drag over the List's own scrolling.
-            if item.canChangeStore {
-                Image(systemName: "line.3.horizontal")
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
-                    .frame(width: 18, height: 40)
-                    .contentShape(Rectangle())
-                    .highPriorityGesture(storeDrag)
-                    .accessibilityLabel("Siirrä vetämällä")
-                    .accessibilityIdentifier("handle-\(item.name)")
-            }
+            // Slim drag handle on EVERY row: free-text items can be reordered
+            // and moved between stores, catalog items can be reordered within
+            // their own store (they just can't leave it — enforced by the
+            // parent). A narrow grip keeps rows compact; the tap area stays
+            // tall enough to grab and win the drag over the List's scrolling.
+            Image(systemName: "line.3.horizontal")
+                .font(.caption2)
+                .foregroundStyle(.quaternary)
+                .frame(width: 18, height: 40)
+                .contentShape(Rectangle())
+                .highPriorityGesture(storeDrag)
+                .accessibilityLabel("Siirrä vetämällä")
+                .accessibilityIdentifier("handle-\(item.name)")
             rowContent
         }
     }

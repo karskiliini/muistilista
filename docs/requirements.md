@@ -87,29 +87,31 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   laidan drag handlesta. Vedon aikana:
   - vedettävä rivi **nousee** (skaalaus + varjo) ja **haamu-esikatselu**
     (nimi, kuva, määrä) seuraa sormea;
-  - **kategorian sisäinen järjestely**: samassa kaupassa pysyen muut rivit
-    **tekevät tilaa reaaliaikaisesti** ja rivi asettuu sormen kohtaan (pysyvä
-    järjestys `sortOrder`illa);
-  - **siirto kauppojen välillä**: vedettävä rivi pysyy vedon aikana omassa
-    osiossaan (himmennettynä) ja kohdekaupan **otsake korostuu**; itse siirto
-    tapahtuu vasta pudotuksessa. (Rivi EI valu elävästi toiseen osioon vedon
-    aikana, koska se relayouttaisi listan, siirtäisi sormen osumakohtaa ja
-    saisi rivin poukkoilemaan osioiden välillä — mikä jäädytti sovelluksen.)
+  - **rivi valuu elävästi** vanhalta paikaltaan sormen osoittamaan uuteen
+    paikkaan — sekä **kategorian sisällä** (eri positio) että **toiseen
+    kategoriaan** — ja muut rivit tekevät tilaa reaaliajassa. Järjestys
+    tallentuu pysyvästi (`sortOrder`).
+  - **Jokaisella rivillä on drag handle.** Vapaatekstituotteen voi järjestellä
+    ja siirtää toiseen kauppaan; **kauppasidonnaisen (katalogi)tuotteen voi
+    järjestellä vain oman kauppansa sisällä** — se ei voi vaihtaa kauppaa
+    (vedettäessä muihin kauppoihin se pysyy omassaan).
   - **"Ei kauppaa" -pudotusvyöhyke** on aina näkyvissä alimpana vedon aikana,
     joten vapaatuotteen voi aina pudottaa takaisin kaupattomaksi;
   - pudotuksen jälkeen näkymä keskittyy siirrettyyn tuotteeseen.
-  **Vain vapaatekstituotteita voi vetää; kauppasidonnaiset (katalogista
-  lisätyt) tuotteet ovat lukittuja omaan kauppaansa** eikä niillä ole drag
-  handlea. Lukitus koskee myös vanhoja katalogirivejä jotka on tallennettu
+  Kaupan vaihdon lukitus koskee myös vanhoja katalogirivejä jotka on tallennettu
   ennen `fromCatalog`-lippua: tuote katsotaan kauppasidonnaiseksi jos sillä on
   lippu, katalogihinta tai kuvia (`canChangeStore`).
   **Toteutus:** oma `DragGesture` (ei SwiftUI:n `.draggable`/`.dropDestination`
   -paria, joka ei koskaan käynnistynyt tämän `List`in sisällä). Sormen sijainti
   ja rivikehykset luetaan **samassa `.global`-koordinaatistossa** (List-solun
   ele ja kehysten luku eivät sopineet nimetystä koordinaatistosta, mikä esti
-  sekä pudotuksen että haamun näkymisen). Sisäinen järjestely hit-testataan
-  vedon alussa otettuun kiinteään rivikehys-tilannekuvaan, ettei järjestely
-  ruoki itseään. Rivikehykset säilytetään **viittaustyyppisessä varastossa**
+  sekä pudotuksen että haamun näkymisen).
+  **Kriittistä: sormen kohde hit-testataan vedon alussa otettuun kiinteään
+  slot-tilannekuvaan (`dragSlots`), EI elävään layoutiin.** Aiemmin elävä
+  layout aiheutti sen että kun rivi siirtyi toiseen osioon, koko lista
+  relayouttautui → sormen osumakohta muuttui → rivi poukkoili osioiden välillä
+  → sovellus jäätyi. Kiinteä tilannekuva tekee kohteesta puhtaan funktion
+  sormen sijainnista, joten rivi voi valua vapaasti ilman takaisinkytkentää. Rivikehykset säilytetään **viittaustyyppisessä varastossa**
   (ei `@State`), jottei niiden päivitys (joka tapahtuu joka animaatioruudulla —
   esim. pudotuksen jousi tai määrän veto) aja `body`:ä uudelleen loputtomassa
   silmukassa, mikä jäädytti sovelluksen. Varmennettu regressiotesteillä (drop-
