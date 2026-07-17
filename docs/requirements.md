@@ -81,9 +81,17 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   tapa siirtää tuote kauppaan, jota ei vielä ole listalla.
 - **R32** ✅ Tuotteen voi siirtää toiseen kauppaan myös vetämällä: rivin
   vasemmassa laidassa on drag handle, josta tuotteen voi raahata ja pudottaa
-  toisen kaupan osioon (otsake korostuu pudotuskohteena). Pudotuksen jälkeen
-  näkymä keskittyy siirrettyyn tuotteeseen. Pitkä painallus avaa edelleen
-  context-menun (drag handle erottaa vedon painalluksesta).
+  toisen kaupan osioon (otsake korostuu pudotuskohteena). Vedon aikana
+  näytetään live-esikatselu tuotteesta (nimi, kuva, määrä), ja pudotuksen
+  jälkeen tuote animoituu uuteen ryhmäänsä ja näkymä keskittyy siihen.
+  **Kauppasidonnaiset (katalogista lisätyt) tuotteet ovat lukittuja omaan
+  kauppaansa** — niillä ei ole drag handlea eikä "Siirrä kauppaan"
+  -valikkoa (vain vapaatuotteita voi siirtää). Drag handlen pitkä painallus
+  aloittaa vedon (ei avaa context-menua); context-menu avautuu rivin muusta
+  osasta.
+  **Kesken (🔄): kategorian sisäinen järjestely vetämällä** — vaatii natiivin
+  `.onMove`-eleen, joka kilpailee handle-vedon, context-menun, määrävedon ja
+  pyyhkäisypoiston kanssa; toteutetaan ja viritetään laitteella erikseen.
 - **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
   (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
   sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan

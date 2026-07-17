@@ -258,11 +258,12 @@ struct ShoppingListView: View {
         for uri in uris {
             guard let url = URL(string: uri),
                   let oid = coordinator.managedObjectID(forURIRepresentation: url),
-                  let item = try? context.existingObject(with: oid) as? CDShoppingItem else { continue }
+                  let item = try? context.existingObject(with: oid) as? CDShoppingItem,
+                  item.canChangeStore else { continue }   // catalog items are locked
             item.storeName = store.isEmpty ? nil : store
             moved = item.objectID
         }
-        save()
+        withAnimation(.spring(duration: 0.35)) { save() }
         if let moved { scrollTarget = moved }
     }
 

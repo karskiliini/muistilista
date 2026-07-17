@@ -18,17 +18,40 @@ struct ShoppingRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Drag handle: pick the item up and drop it on a store section to
-            // move it. Long-press elsewhere still opens the context menu.
-            Image(systemName: "line.3.horizontal")
-                .font(.callout)
-                .foregroundStyle(.tertiary)
-                .draggable(item.objectID.uriRepresentation().absoluteString) {
-                    Text(item.name)
-                        .padding(8)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                }
-                .accessibilityLabel("Siirrä vetämällä")
+            // Drag handle — only for free-text items, since catalog products
+            // are tied to their store and can't move. It sits OUTSIDE the
+            // content's context menu so long-pressing it starts the drag
+            // rather than opening the menu.
+            if item.canChangeStore {
+                Image(systemName: "line.3.horizontal")
+                    .font(.callout)
+                    .foregroundStyle(.tertiary)
+                    .draggable(item.objectID.uriRepresentation().absoluteString) { dragPreview }
+                    .accessibilityLabel("Siirrä vetämällä")
+            }
+            rowContent
+        }
+    }
+
+    /// Live drag preview: the item as it moves to the new store.
+    private var dragPreview: some View {
+        HStack(spacing: 8) {
+            if item.isFromStore, let url = item.imageURLs.first {
+                CachedAsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { Color.clear }
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            } else {
+                Image(systemName: "cart").foregroundStyle(.tint)
+            }
+            Text(item.name).lineLimit(1)
+            if item.quantity > 1 { Text("× \(item.quantity)").foregroundStyle(.secondary) }
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var rowContent: some View {
+        HStack(spacing: 12) {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
             // Store items reserve a fixed leading slot so their names align
@@ -89,18 +112,20 @@ struct ShoppingRowView: View {
             Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
             Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
                 .disabled(item.quantity <= 1)
-            Menu {
-                ForEach(Stores.groups) { group in
-                    Section(group.name) {
-                        ForEach(group.stores, id: \.self) { name in
-                            Button(name) { moveToStore(name) }
+            if item.canChangeStore {
+                Menu {
+                    ForEach(Stores.groups) { group in
+                        Section(group.name) {
+                            ForEach(group.stores, id: \.self) { name in
+                                Button(name) { moveToStore(name) }
+                            }
                         }
                     }
+                    Divider()
+                    Button("Ei kauppaa") { moveToStore("") }
+                } label: {
+                    Label("Siirrä kauppaan", systemImage: "arrow.left.arrow.right")
                 }
-                Divider()
-                Button("Ei kauppaa") { moveToStore("") }
-            } label: {
-                Label("Siirrä kauppaan", systemImage: "arrow.left.arrow.right")
             }
             Divider()
             Button(role: .destructive) { deleteSelf() } label: {

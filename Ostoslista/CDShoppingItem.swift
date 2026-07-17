@@ -12,6 +12,11 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var shelfLocation: String?
     @NSManaged var catalogPrice: String?
     @NSManaged var priceValue: Double        // 0 for free-text items
+    @NSManaged var fromCatalog: Bool         // true = a specific store's product
+
+    /// Catalog products are tied to their store and can't be moved; only
+    /// free-text items can change store.
+    var canChangeStore: Bool { !fromCatalog }
     @NSManaged var productDescription: String?
     @NSManaged var imageURLsString: String?
 
