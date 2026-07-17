@@ -15,6 +15,7 @@ struct ShoppingListView: View {
     @State private var sharePresented = false
     @State private var storeAddPresented = false
     @State private var storeQuery = ""
+    @State private var scrollTarget: NSManagedObjectID?
     @State private var isRefreshing = false
     @State private var isSharing = false
     @State private var shareError: String?
@@ -29,6 +30,7 @@ struct ShoppingListView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             List {
                 Section {
                     HStack {
@@ -57,12 +59,27 @@ struct ShoppingListView: View {
                                 item.isDone.toggle()
                                 save()
                             }
+                            .id(item.objectID)
                         }
                         .onDelete(perform: deleteItems)
                     } header: {
                         Text("\(checkedCount) / \(items.count)")
                     }
                 }
+            }
+            .animation(.default, value: items.count)
+            .onChange(of: scrollTarget) { _, target in
+                guard let target else { return }
+                // Let the sheet finish dismissing and the row insert, then
+                // scroll the new item into view with animation.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(450))
+                    withAnimation(.spring(duration: 0.4)) {
+                        proxy.scrollTo(target, anchor: .center)
+                    }
+                    scrollTarget = nil
+                }
+            }
             }
             .overlay {
                 if items.isEmpty {
@@ -162,7 +179,9 @@ struct ShoppingListView: View {
                 }
             }
             .sheet(isPresented: $storeAddPresented) {
-                StoreAddView(initialQuery: storeQuery)
+                StoreAddView(initialQuery: storeQuery) { addedID in
+                    scrollTarget = addedID
+                }
             }
         }
     }

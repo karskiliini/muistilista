@@ -9,6 +9,8 @@ import CoreData
 struct StoreAddView: View {
     /// Prefilled from the main screen's add field when the store icon is tapped.
     let initialQuery: String
+    /// Called with the new item's ID after adding, so the list can scroll to it.
+    let onAdded: (NSManagedObjectID) -> Void
 
     @EnvironmentObject private var store: StoreProvider
     @Environment(\.managedObjectContext) private var context
@@ -16,13 +18,15 @@ struct StoreAddView: View {
 
     @AppStorage("lastStoreName") private var storeName = ""
     @State private var productName = ""
-    @State private var addedCount = 0
     @State private var results: [CatalogProduct] = []
     @State private var searching = false
     @State private var searchTask: Task<Void, Never>?
     @FocusState private var productFocused: Bool
 
-    init(initialQuery: String = "") { self.initialQuery = initialQuery }
+    init(initialQuery: String = "", onAdded: @escaping (NSManagedObjectID) -> Void = { _ in }) {
+        self.initialQuery = initialQuery
+        self.onAdded = onAdded
+    }
 
     private var catalog: CatalogProvider? { CatalogRegistry.provider(for: storeName) }
 
@@ -107,10 +111,6 @@ struct StoreAddView: View {
             Button(catalog != nil ? "Lisää vapaana tekstinä" : "Lisää listalle") { addManual() }
                 .disabled(ShoppingListLogic.normalized(productName) == nil
                           || ShoppingListLogic.normalized(storeName) == nil)
-        } footer: {
-            if addedCount > 0 {
-                Text(addedCount == 1 ? "1 tuote lisätty" : "\(addedCount) tuotetta lisätty")
-            }
         }
     }
 
@@ -144,7 +144,9 @@ struct StoreAddView: View {
     }
 
     /// Shared insert: item lands in the list's store and carries the
-    /// catalog's price/description/images/shelf when present.
+    /// catalog's price/description/images/shelf when present. Adding one
+    /// item closes the store view and hands the new item's ID back so the
+    /// list can scroll to it.
     private func insert(name: String, shelf: String?, catalog: CatalogProduct?) {
         guard let storeTrimmed = ShoppingListLogic.normalized(storeName) else { return }
         let item = CDShoppingItem(context: context)
@@ -158,10 +160,9 @@ struct StoreAddView: View {
             if let listStore = list.objectID.persistentStore { context.assign(item, to: listStore) }
             item.list = list
         }
-        try? context.save()
-        addedCount += 1
-        productName = ""; results = []
-        productFocused = true
+        try? context.save()   // makes the objectID permanent
+        onAdded(item.objectID)
+        dismiss()
     }
 }
 

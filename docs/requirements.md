@@ -95,7 +95,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   **Kesko** (K-ruokakaupat), joka vaatii käyttäjän ilmaisen
   developer.kesko.fi-avaimen — sille käytetään vapaasanalisäystä kunnes
   avain on annettu. Vapaasanalisäys päänäkymässä ei muutu tästä millään
-  tavalla.
+  tavalla. Kun tuote lisätään kauppanäkymästä, kauppanäkymä animoituu pois
+  (sulkeutuu) ja lista skrollaa juuri lisättyyn tuotteeseen, joka ilmestyy
+  paikalleen animoituna.
 - **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla
