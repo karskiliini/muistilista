@@ -228,6 +228,33 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertNil(ShoppingListLogic.changeSummary(added: [], updated: [], deletedCount: 0))
     }
 
+    func testCrashReportRoundTripsThroughFile() throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("crash-test-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let report = CrashReport(date: Date(timeIntervalSince1970: 1000), version: "9.9.9",
+                                 kind: "coredata", name: "TestError",
+                                 reason: "store load failed", stack: ["frame0", "frame1"])
+        CrashReporter.save(report, to: url)
+        let loaded = CrashReporter.load(from: url)
+        XCTAssertEqual(loaded?.version, "9.9.9")
+        XCTAssertEqual(loaded?.name, "TestError")
+        XCTAssertEqual(loaded?.reason, "store load failed")
+        XCTAssertEqual(loaded?.stack.count, 2)
+
+        CrashReporter.clear(at: url)
+        XCTAssertNil(CrashReporter.load(from: url))
+    }
+
+    func testCrashReportSummaryIsHumanReadable() {
+        let report = CrashReport(date: Date(timeIntervalSince1970: 0), version: "1.0",
+                                 kind: "signal", name: "SIGSEGV",
+                                 reason: "segmentation fault", stack: [])
+        XCTAssertTrue(report.summary.contains("SIGSEGV"))
+        XCTAssertTrue(report.summary.contains("segmentation fault"))
+    }
+
     func testCoreDataRoundTrip() throws {
         let container = CoreDataStack.container(inMemory: true)
         let context = container.viewContext

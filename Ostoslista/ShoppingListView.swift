@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreData
 import CloudKit
+import UIKit
 
 struct ShoppingListView: View {
     @Environment(\.managedObjectContext) private var context
@@ -16,6 +17,7 @@ struct ShoppingListView: View {
     @State private var isRefreshing = false
     @State private var isSharing = false
     @State private var shareError: String?
+    @State private var pendingCrash: CrashReport?
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -88,6 +90,22 @@ struct ShoppingListView: View {
             } message: {
                 Text(shareError ?? "")
             }
+            .alert("Sovellus kaatui viime kerralla", isPresented: .constant(pendingCrash != nil)) {
+                Button("Kopioi tiedot") {
+                    if let c = pendingCrash {
+                        UIPasteboard.general.string = c.summary + "\n\n" + c.stack.joined(separator: "\n")
+                    }
+                    CrashReporter.clearPending()
+                    pendingCrash = nil
+                }
+                Button("Sulje", role: .cancel) {
+                    CrashReporter.clearPending()
+                    pendingCrash = nil
+                }
+            } message: {
+                Text((pendingCrash?.summary ?? "") + "\n\nKopioi tiedot ja lähetä ne kehittäjälle syyn selvittämiseksi.")
+            }
+            .task { pendingCrash = CrashReporter.pending() }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {

@@ -195,8 +195,24 @@ enum CoreDataStack {
             }
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
         }
-        container.loadPersistentStores { _, error in
-            if let error { fatalError("Cannot load store: \(error)") }
+        container.loadPersistentStores { description, error in
+            guard let error else { return }
+            // Record the cause so it's visible next launch, then try to
+            // recover instead of crashing: an incompatible on-disk store
+            // (usually a model change) is destroyed and rebuilt — the data
+            // re-syncs from CloudKit. Only a second failure is fatal.
+            CrashReporter.recordCoreData(error)
+            if let url = description.url {
+                try? container.persistentStoreCoordinator.destroyPersistentStore(
+                    at: url, ofType: NSSQLiteStoreType, options: nil)
+                do {
+                    try container.persistentStoreCoordinator.addPersistentStore(
+                        ofType: NSSQLiteStoreType, configurationName: nil, at: url,
+                        options: description.options)
+                } catch {
+                    fatalError("Cannot load store after recovery: \(error)")
+                }
+            }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.transactionAuthor = transactionAuthor

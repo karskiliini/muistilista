@@ -109,6 +109,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   muistetaan, synkkautuu perheelle ja esitäytetään seuraavalla kerralla —
   kaikissa kaupoissa, myös ilman katalogirajapintaa.
 
+- **R27** ✅ Sovellus seuraa kaatumisia: uncaught-poikkeukset, fataalit
+  signaalit (SIGABRT/SIGSEGV/…) ja Core Datan tietovaraston latausvirheet
+  tallennetaan App Group -tiedostoon (syy, versio, pino). Seuraavalla
+  käynnistyksellä näytetään ilmoitus kaatumisen syystä ja "Kopioi tiedot"
+  -painike. Lisäksi tietovaraston latausvirhe ei enää kaada sovellusta
+  vaan kirjataan ja yritetään toipua (kanta rakennetaan uudelleen,
+  data synkkautuu iCloudista).
+
 ## Ei-toiminnalliset vaatimukset ja rajaukset
 
 - **R16** ✅ Vähimmäisversio iOS 17.0.

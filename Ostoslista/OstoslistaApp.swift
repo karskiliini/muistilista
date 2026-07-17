@@ -7,6 +7,10 @@ struct OstoslistaApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var store = StoreProvider()
 
+    init() {
+        CrashReporter.install()
+    }
+
     var body: some Scene {
         WindowGroup {
             ShoppingListView()
