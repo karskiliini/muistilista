@@ -199,6 +199,32 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertFalse(KRautaCatalog.handles(storeName: "Tokmanni"))
     }
 
+    func testMotonetParsesSuggestionsProduct() {
+        let json = """
+        {"groups":[],"queryUsed":"jarrupala","products":[{
+          "id":"98-27478","isVariant":false,"name":"Jarrupalasarja 98-27478",
+          "description":"Brembo Carbon-Ceramic","price":"26,90","brand":"BREMBO",
+          "categoryName":"Jarrupalat","categoryUrl":"/x"
+        }]}
+        """.data(using: .utf8)!
+        let products = MotonetCatalog.parse(json)
+        XCTAssertEqual(products.count, 1)
+        let p = products[0]
+        XCTAssertEqual(p.name, "Jarrupalasarja 98-27478")
+        XCTAssertEqual(p.price, 26.90)
+        XCTAssertEqual(p.priceText, "26,90 €")
+        XCTAssertEqual(p.brand, "BREMBO")
+        XCTAssertEqual(p.categoryPath, ["Jarrupalat"])
+        XCTAssertEqual(p.description, "Brembo Carbon-Ceramic")
+        XCTAssertEqual(p.imageURLs.first?.absoluteString,
+                       "https://cdn.broman.group/api/image/v2/image/motonet/productcode/98-27478/300/300/80/FFFFFF00.webp")
+    }
+
+    func testMotonetHandlesOnlyMotonet() {
+        XCTAssertTrue(MotonetCatalog.handles(storeName: "Motonet"))
+        XCTAssertFalse(MotonetCatalog.handles(storeName: "Puuilo"))
+    }
+
     func testSKaupatCatalogHandlesSGroupStoreNames() {
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "Prisma Kuopio"))
         XCTAssertTrue(SKaupatCatalog.handles(storeName: "S-market Saarijärvi"))

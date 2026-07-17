@@ -93,8 +93,11 @@ struct StoreAddView: View {
                 HStack { ProgressView(); Text("Haetaan…").foregroundStyle(.secondary) }
             } else if !results.isEmpty {
                 ForEach(results) { product in
-                    Button { addCatalog(product) } label: { CatalogRow(product: product) }
-                        .buttonStyle(.plain)
+                    NavigationLink {
+                        CatalogProductDetailView(product: product) { addCatalog(product) }
+                    } label: {
+                        CatalogRow(product: product)
+                    }
                 }
             } else if ShoppingListLogic.normalized(productName) != nil {
                 Text("Ei osumia").foregroundStyle(.secondary)
@@ -195,7 +198,6 @@ private struct CatalogRow: View {
                     Text(comparison).font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            Image(systemName: "plus.circle.fill").foregroundStyle(.tint)
         }
     }
 }

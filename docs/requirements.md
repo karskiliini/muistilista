@@ -90,14 +90,20 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   live-varmennettu (on-device-integraatiotestit hakevat oikeista
   rajapinnoista): S-ryhmä (s-kaupat GraphQL), Puuilo (Algolia, avain
   haetaan dynaamisesti sivulta koska se vanhenee), Tokmanni (Klevu,
-  klusteri eucs11) ja K-Rauta (hakusivun HTML parsitaan; sisältää oikean
-  hyllypaikan osasto+hyllynumero muodossa). Ainoa toteuttamatta jäävä on
-  **Kesko** (K-ruokakaupat), joka vaatii käyttäjän ilmaisen
+  klusteri eucs11), K-Rauta (hakusivun HTML parsitaan; sisältää oikean
+  hyllypaikan osasto+hyllynumero muodossa) ja Motonet
+  (`/api/suggestions`, kuva Broman-CDN:stä tuotekoodilla). Ainoa
+  toteuttamatta jäävä on **Kesko** (K-ruokakaupat), joka vaatii käyttäjän
+  ilmaisen
   developer.kesko.fi-avaimen — sille käytetään vapaasanalisäystä kunnes
   avain on annettu. Vapaasanalisäys päänäkymässä ei muutu tästä millään
-  tavalla. Kun tuote lisätään kauppanäkymästä, kauppanäkymä animoituu pois
-  (sulkeutuu) ja lista skrollaa juuri lisättyyn tuotteeseen, joka ilmestyy
-  paikalleen animoituna.
+  tavalla. Hakutulosriviä napauttamalla avautuu tuotteen detail-näkymä
+  (kuva/hinta/merkki/hyllypaikka/kategoria/kuvaus), josta voi painaa +
+  (lisää listalle) tai palata takaisin hakuun. Kun tuote lisätään
+  kauppanäkymästä, kauppanäkymä animoituu pois (sulkeutuu) ja lista
+  skrollaa juuri lisättyyn tuotteeseen, joka ilmestyy paikalleen
+  animoituna. Viimeisin valittu kauppa säilyy oletuksena seuraavilla
+  hauilla (ja käynnistysten yli).
 - **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla

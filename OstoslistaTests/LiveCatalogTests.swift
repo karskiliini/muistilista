@@ -37,4 +37,8 @@ final class LiveCatalogTests: XCTestCase {
     func testKRautaLiveSearchReturnsProducts() async throws {
         try await assertFindsProducts(KRautaCatalog(), query: "vasara")
     }
+
+    func testMotonetLiveSearchReturnsProducts() async throws {
+        try await assertFindsProducts(MotonetCatalog(), query: "jarrupala")
+    }
 }
