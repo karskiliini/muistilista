@@ -28,6 +28,7 @@ targets:
         CFBundleDisplayName: Ostoslista
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CKSharingSupported: true
+        NSLocationWhenInUseUsageDescription: "Sijaintia käytetään lähimmän K-ruokakaupan valintaan tuotehakuun."
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:
@@ -38,7 +39,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        MARKETING_VERSION: 1.17.0
+        MARKETING_VERSION: 1.18.0
         CURRENT_PROJECT_VERSION: 1
         PRODUCT_BUNDLE_IDENTIFIER: fi.maaranen.ostoslista
         SWIFT_VERSION: "5.9"

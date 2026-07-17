@@ -15,6 +15,7 @@ struct StoreAddView: View {
     @EnvironmentObject private var store: StoreProvider
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var kRuoka = KRuokaWebEngine.shared
 
     @AppStorage("lastStoreName") private var storeName = ""
     @State private var productName = ""
@@ -87,9 +88,22 @@ struct StoreAddView: View {
         }
     }
 
+    /// K-ruoka runs through the embedded web engine; surface its state.
+    private var kRuokaUnavailable: Bool {
+        catalog is KRuokaCatalog && kRuoka.status == .unavailable
+    }
+    private var kRuokaWarming: Bool {
+        catalog is KRuokaCatalog && (kRuoka.status == .warming || kRuoka.status == .idle)
+    }
+
     private var catalogResultsSection: some View {
         Section {
-            if searching {
+            if kRuokaUnavailable {
+                Label("K-ruoan tiedot eivät ole juuri nyt saatavilla.", systemImage: "wifi.exclamationmark")
+                    .foregroundStyle(.secondary)
+            } else if kRuokaWarming && ShoppingListLogic.normalized(productName) != nil {
+                HStack { ProgressView(); Text("Yhdistetään K-ruokaan…").foregroundStyle(.secondary) }
+            } else if searching {
                 HStack { ProgressView(); Text("Haetaan…").foregroundStyle(.secondary) }
             } else if !results.isEmpty {
                 ForEach(results) { product in

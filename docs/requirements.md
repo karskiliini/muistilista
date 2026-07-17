@@ -73,6 +73,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
+- **R28** 🔄 K-ruokakaupat (K-Citymarket/K-Supermarket/K-Market) haetaan
+  laitteella olevan piiloselaimen (WKWebView) kautta, koska k-ruoka.fi on
+  Cloudflaren takana eikä URLSession pääse läpi. Moottori esiladataan
+  käynnistyksessä ja valitsee lähimmän kaupan laitteen sijainnista. Koko
+  monimutkaisuus on eristetty omaan moduuliin (`KRuokaWebEngine`), joka ei
+  sotke muuta koodia. Jos moottori ei toimi (Cloudflare kiristää, sivu
+  muuttuu, ei verkkoa), Keskon dataa ei näytetä ja käyttäjälle kerrotaan
+  selkeästi "K-ruoan tiedot eivät ole juuri nyt saatavilla".
 - **R23** 🔄 Tuotteen voi VALINNAISESTI lisätä kaupan kautta: hakukentän
   oikeassa laidassa on kauppa-nappi, josta valitaan kauppa. Kauppavalinta on
   pudotusvalikko kiinteästä, ryhmitellystä listasta tuettuja kauppoja

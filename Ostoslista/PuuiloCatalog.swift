@@ -63,7 +63,7 @@ struct PuuiloCatalog: CatalogProvider {
     }
 }
 
-enum CatalogError: Error { case unauthorized }
+enum CatalogError: Error { case unauthorized, unavailable }
 
 /// Caches Puuilo's rotating Algolia key across searches; scrapes a fresh
 /// one from the site when missing or expired. Actor-isolated so concurrent
