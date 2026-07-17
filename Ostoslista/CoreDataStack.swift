@@ -95,6 +95,11 @@ enum CoreDataStack {
         itemPrice.attributeType = .stringAttributeType
         itemPrice.isOptional = true
 
+        let itemPriceValue = NSAttributeDescription()
+        itemPriceValue.name = "priceValue"
+        itemPriceValue.attributeType = .doubleAttributeType
+        itemPriceValue.defaultValue = 0.0
+
         let itemDesc = NSAttributeDescription()
         itemDesc.name = "productDescription"
         itemDesc.attributeType = .stringAttributeType
@@ -150,7 +155,7 @@ enum CoreDataStack {
         memListRel.inverseRelationship = memoriesRel
 
         entity.properties = [name, isDone, createdAt, quantity, uuid, listRel,
-                             itemStore, itemShelf, itemPrice, itemDesc, itemImages]
+                             itemStore, itemShelf, itemPrice, itemPriceValue, itemDesc, itemImages]
         listEntity.properties = [listName, listCreatedAt, itemsRel, memoriesRel]
         memoryEntity.properties = [memProduct, memStore, memShelf, memUpdatedAt, memListRel]
 

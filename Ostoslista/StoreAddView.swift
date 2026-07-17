@@ -186,6 +186,7 @@ struct StoreAddView: View {
         item.storeName = storeTrimmed
         item.shelfLocation = shelf
         item.catalogPrice = catalog?.priceText
+        item.priceValue = catalog?.price ?? 0
         item.productDescription = catalog?.description
         item.imageURLsString = catalog?.imageURLs.map(\.absoluteString).joined(separator: "\n")
         if let list = store.currentList {

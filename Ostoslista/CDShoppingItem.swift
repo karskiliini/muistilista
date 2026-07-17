@@ -11,8 +11,12 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var storeName: String?
     @NSManaged var shelfLocation: String?
     @NSManaged var catalogPrice: String?
+    @NSManaged var priceValue: Double        // 0 for free-text items
     @NSManaged var productDescription: String?
     @NSManaged var imageURLsString: String?
+
+    /// Line total (unit price × quantity); 0 when the item has no price.
+    var lineTotal: Double { priceValue * Double(quantity) }
 
     /// Catalog image URLs (stored newline-joined); empty for free-text items.
     /// Repairs the earlier broken s-cloud modifier/extension so items added

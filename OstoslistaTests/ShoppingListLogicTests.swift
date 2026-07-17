@@ -296,6 +296,24 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertTrue(report.summary.contains("segmentation fault"))
     }
 
+    func testPriceTextFormatsFinnishAndHidesZero() {
+        XCTAssertEqual(ShoppingListLogic.priceText(12.5), "12,50 €")
+        XCTAssertEqual(ShoppingListLogic.priceText(0.95), "0,95 €")
+        XCTAssertNil(ShoppingListLogic.priceText(0))
+    }
+
+    func testLineTotalMultipliesPriceByQuantity() throws {
+        let container = CoreDataStack.container(inMemory: true)
+        let item = CDShoppingItem(context: container.viewContext)
+        item.name = "maito"
+        item.priceValue = 1.5
+        item.quantity = 3
+        XCTAssertEqual(item.lineTotal, 4.5, accuracy: 0.0001)
+        let free = CDShoppingItem(context: container.viewContext)
+        free.name = "leipä"
+        XCTAssertEqual(free.lineTotal, 0)   // no price → 0
+    }
+
     func testCoreDataRoundTrip() throws {
         let container = CoreDataStack.container(inMemory: true)
         let context = container.viewContext

@@ -28,6 +28,29 @@ struct ShoppingListView: View {
     private var sortedItems: [CDShoppingItem] { ShoppingListLogic.sorted(Array(items)) }
     private var checkedCount: Int { ShoppingListLogic.checked(Array(items)).count }
 
+    /// Items grouped by store: named stores first (alphabetical), items
+    /// without a store ("Muut") last. Each group keeps the unchecked-first
+    /// order.
+    private struct StoreGroup: Identifiable {
+        let store: String            // "" for no-store
+        let items: [CDShoppingItem]
+        var id: String { store }
+        var title: String { store.isEmpty ? "Muut" : store }
+        var subtotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
+    }
+
+    private var storeGroups: [StoreGroup] {
+        let byStore = Dictionary(grouping: Array(items)) { $0.storeName ?? "" }
+        return byStore
+            .map { StoreGroup(store: $0.key, items: ShoppingListLogic.sorted($0.value)) }
+            .sorted { a, b in
+                if a.store.isEmpty != b.store.isEmpty { return !a.store.isEmpty } // "Muut" last
+                return a.store.localizedCaseInsensitiveCompare(b.store) == .orderedAscending
+            }
+    }
+
+    private var grandTotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
@@ -52,18 +75,39 @@ struct ShoppingListView: View {
                         .buttonStyle(.borderless)
                     }
                 }
-                if !items.isEmpty {
+                ForEach(storeGroups) { group in
                     Section {
-                        ForEach(sortedItems) { item in
+                        ForEach(group.items) { item in
                             ShoppingRowView(item: item) {
                                 item.isDone.toggle()
                                 save()
                             }
                             .id(item.objectID)
                         }
-                        .onDelete(perform: deleteItems)
+                        .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
-                        Text("\(checkedCount) / \(items.count)")
+                        HStack {
+                            Text(group.title)
+                            Spacer()
+                            Text("\(ShoppingListLogic.checked(group.items).count) / \(group.items.count)")
+                                .foregroundStyle(.secondary)
+                        }
+                    } footer: {
+                        if let subtotal = ShoppingListLogic.priceText(group.subtotal) {
+                            HStack {
+                                Spacer()
+                                Text("Yhteensä \(subtotal)").foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                if let total = ShoppingListLogic.priceText(grandTotal) {
+                    Section {
+                        HStack {
+                            Text("Kaikki kaupat yhteensä").fontWeight(.semibold)
+                            Spacer()
+                            Text(total).fontWeight(.semibold).monospacedDigit()
+                        }
                     }
                 }
             }
@@ -203,9 +247,8 @@ struct ShoppingListView: View {
         inputFocused = true
     }
 
-    private func deleteItems(at offsets: IndexSet) {
-        let current = sortedItems
-        for index in offsets { context.delete(current[index]) }
+    private func deleteItems(from groupItems: [CDShoppingItem], at offsets: IndexSet) {
+        for index in offsets { context.delete(groupItems[index]) }
         save()
     }
 

@@ -20,8 +20,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
 - **R5** ✅ Rivin napautus vaihtaa ostettu-tilan. Ostetut rivit näkyvät
   harmaina ja yliviivattuina listan lopussa; ostamattomat ensin. Kummassakin
   ryhmässä vanhin ensin.
-- **R6** ✅ Listan otsakkeessa näkyy edistyminen muodossa
-  "ostetut / kaikki" (esim. "3 / 8").
+- **R6** ✅ Edistyminen näkyy muodossa "ostetut / kaikki" (esim. "3 / 8").
+  Kun lista on ryhmitelty kaupoittain (R30), luku näkyy kunkin kauppa­ryhmän
+  otsakkeessa.
 - **R7** ✅ Työkalurivin painike "Tyhjennä ostetut" poistaa kaikki ostetut
   rivit kerralla. Painike on estetty, kun ostettuja ei ole.
 - **R8** ✅ Rivin voi poistaa vetämällä vasemmalle (järjestelmän
@@ -74,6 +75,13 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
+- **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
+  (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
+  sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan
+  lopussa kaikkien kauppojen yhteissumma. Kauppaosiossa voi olla myös
+  hinnattomia vapaatuotteita (manuaalisesti lisättyjä, tiettyyn kauppaan
+  kuuluvia) — ne eivät kasvata summaa mutta kertovat mistä kaupasta tuote
+  haetaan. Ilman kauppaa lisätyt tuotteet ovat omassa "Muut"-ryhmässään.
 - **R29** ✅ Kauppanäkymän hakutulosriviä voi napauttaa (avaa detail-näkymän)
   TAI pyyhkäistä: vasemmalle pyyhkäisy lisää tuotteen suoraan listalle
   (1 kpl, ei detail-näkymän kautta), oikealle pyyhkäisy tarjoaa pikavalinnat

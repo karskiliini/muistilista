@@ -32,6 +32,13 @@ enum ShoppingListLogic {
         max(1, start + Int(dragWidth / 36))
     }
 
+    /// Finnish price string for a summed value, e.g. 12.5 → "12,50 €".
+    /// Returns nil for a zero/absent total so free-only groups show no price.
+    static func priceText(_ value: Double) -> String? {
+        guard value > 0 else { return nil }
+        return String(format: "%.2f", value).replacingOccurrences(of: ".", with: ",") + " €"
+    }
+
     /// Human-readable category breadcrumb, broadest category first (the
     /// catalog returns it narrowest-first). Nil when there is no path.
     static func categoryHint(_ path: [String]) -> String? {
