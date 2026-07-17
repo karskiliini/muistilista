@@ -94,21 +94,34 @@ struct ShoppingRowView: View {
                 Button { showingDetail = true } label: {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.tint)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Tuotetiedot")
             }
+            actionsMenu
         }
         .animation(.spring(duration: 0.2), value: dragQuantity)
         .contentShape(Rectangle())
         .onTapGesture(perform: onToggle)
         .simultaneousGesture(quantityDrag)
         .sheet(isPresented: $showingDetail) { ItemDetailView(item: item) }
-        // Discoverable, non-gesture way to change quantity (also covers
-        // Switch Control users who can't perform the drag).
-        .contextMenu {
+        // VoiceOver: swipe up/down adjusts quantity.
+        .accessibilityValue(item.quantity > 1 ? "\(item.quantity) kappaletta" : "")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: changeQuantity(+1)
+            case .decrement: changeQuantity(-1)
+            @unknown default: break
+            }
+        }
+    }
+
+    /// Tap-triggered actions menu (⋯) — replaces the long-press context menu
+    /// so long-pressing the drag handle starts a drag instead of the menu.
+    private var actionsMenu: some View {
+        Menu {
             Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
             Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
                 .disabled(item.quantity <= 1)
@@ -131,16 +144,14 @@ struct ShoppingRowView: View {
             Button(role: .destructive) { deleteSelf() } label: {
                 Label("Poista tuote", systemImage: "trash")
             }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .foregroundStyle(.secondary)
+                .frame(width: 40, height: 44)
+                .contentShape(Rectangle())
         }
-        // VoiceOver: swipe up/down adjusts quantity.
-        .accessibilityValue(item.quantity > 1 ? "\(item.quantity) kappaletta" : "")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: changeQuantity(+1)
-            case .decrement: changeQuantity(-1)
-            @unknown default: break
-            }
-        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Toiminnot")
     }
 
     private var thumbnail: some View {

@@ -75,15 +75,17 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
-- **R31** ✅ Rivin pitkän painalluksen valikossa on "Siirrä kauppaan"
-  -alavalikko, joka tarjoaa pudotuslistan tuetuista kaupoista (sekä "Ei
-  kauppaa"). Valinta siirtää tuotteen sen kaupan ryhmään (R30). Tämä on
-  tapa siirtää tuote kauppaan, jota ei vielä ole listalla.
+- **R31** ✅ Rivin oikeassa laidassa on "⋯"-toimintonappi (napautettava,
+  ei pitkä painallus — jotta vasemman laidan drag handlen pitkä painallus
+  aloittaa vedon eikä avaa valikkoa). Valikossa: määrän lisäys/vähennys,
+  "Siirrä kauppaan" -alavalikko (vain vapaatuotteille; tapa siirtää tuote
+  kauppaan jota ei vielä ole listalla) ja "Poista tuote".
 - **R32** ✅ Tuotteen voi siirtää toiseen kauppaan myös vetämällä: rivin
   vasemmassa laidassa on drag handle, josta tuotteen voi raahata ja pudottaa
   toisen kaupan osioon (otsake korostuu pudotuskohteena). Vedon aikana
   näytetään live-esikatselu tuotteesta (nimi, kuva, määrä), ja pudotuksen
-  jälkeen tuote animoituu uuteen ryhmäänsä ja näkymä keskittyy siihen.
+  jälkeen tuote **valuu animoituna** uuteen ryhmäänsä (himmennettynä siirron
+  ajan) ja näkymä keskittyy siihen.
   **Kauppasidonnaiset (katalogista lisätyt) tuotteet ovat lukittuja omaan
   kauppaansa** — niillä ei ole drag handlea eikä "Siirrä kauppaan"
   -valikkoa (vain vapaatuotteita voi siirtää). Drag handlen pitkä painallus

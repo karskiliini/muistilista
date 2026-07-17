@@ -16,6 +16,7 @@ struct ShoppingListView: View {
     @State private var storeAddPresented = false
     @State private var storeQuery = ""
     @State private var scrollTarget: NSManagedObjectID?
+    @State private var recentlyMoved: NSManagedObjectID?
     @State private var isRefreshing = false
     @State private var isSharing = false
     @State private var shareError: String?
@@ -51,6 +52,13 @@ struct ShoppingListView: View {
 
     private var grandTotal: Double { items.reduce(0) { $0 + $1.lineTotal } }
 
+    /// Changes whenever any item's store/checked state changes, so the List
+    /// animates moves between groups.
+    private var groupSignature: String {
+        items.map { "\($0.objectID.uriRepresentation().lastPathComponent):\($0.storeName ?? "-"):\($0.isDone ? 1 : 0)" }
+            .sorted().joined(separator: "|")
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
@@ -83,6 +91,7 @@ struct ShoppingListView: View {
                                 save()
                             }
                             .id(item.objectID)
+                            .opacity(recentlyMoved == item.objectID ? 0.5 : 1)
                         }
                         .onDelete { offsets in deleteItems(from: group.items, at: offsets) }
                     } header: {
@@ -109,7 +118,10 @@ struct ShoppingListView: View {
                     }
                 }
             }
-            .animation(.default, value: items.count)
+            // Animate section/row changes — including an item moving to a new
+            // store group — by keying on a signature that captures store,
+            // checked state and order for every item.
+            .animation(.spring(duration: 0.35), value: groupSignature)
             .onChange(of: scrollTarget) { _, target in
                 guard let target else { return }
                 // Let the sheet finish dismissing and the row insert, then
@@ -263,8 +275,15 @@ struct ShoppingListView: View {
             item.storeName = store.isEmpty ? nil : store
             moved = item.objectID
         }
-        withAnimation(.spring(duration: 0.35)) { save() }
-        if let moved { scrollTarget = moved }
+        save()   // the List's groupSignature animation flows the row over
+        if let moved {
+            scrollTarget = moved
+            recentlyMoved = moved
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                if recentlyMoved == moved { recentlyMoved = nil }
+            }
+        }
     }
 
     private func clearChecked() {
