@@ -107,7 +107,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ele ja kehysten luku eivät sopineet nimetystä koordinaatistosta, mikä esti
   sekä pudotuksen että haamun näkymisen). Sisäinen järjestely hit-testataan
   vedon alussa otettuun kiinteään rivikehys-tilannekuvaan, ettei järjestely
-  ruoki itseään.
+  ruoki itseään. Rivikehykset säilytetään **viittaustyyppisessä varastossa**
+  (ei `@State`), jottei niiden päivitys (joka tapahtuu joka animaatioruudulla —
+  esim. pudotuksen jousi tai määrän veto) aja `body`:ä uudelleen loputtomassa
+  silmukassa, mikä jäädytti sovelluksen. Varmennettu regressiotesteillä (drop-
+  ja määränveto-eleen jälkeen sovellus vastaa yhä).
   **Varmennettu automaattisilla UI-testeillä** (`OstoslistaUITests`), jotka
   simuloivat painallus-ja-veto-eleen emulaattorissa: vapaa tuote siirtyy
   kauppaan, järjestyy ryhmänsä sisällä, palautuu kaupattomaksi, eikä
@@ -172,6 +176,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
   hinta, kauppa, hyllypaikka ja kuvaus (jos saatavilla). Vapaasanatuotteilla
   ei ole mitään extraa — pelkkä nimi.
+  **Rivit ovat matalia (paljon mahtuu näytölle):** hinta ja kauppa/hyllypaikka
+  näkyvät **nimen alapuolella** pienellä tekstillä (ei oikeassa laidassa, jottei
+  vie leveyttä), ja rivin pystymitta on tiivis.
 - **R25** ✅ Hyllypaikan lähde riippuu kaupasta: kaupat jotka tarjoavat
   hyllypaikan (esim. K-Rauta) näyttävät sen hakutuloksessa ja tuotteen
   ⓘ-näkymässä. **Motonetilla** hyllypaikka on tuotesivulla mutta vaatii
@@ -212,8 +219,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ympäristömuuttujalla, jotta ne eivät riipu verkosta.
 - **R33** ✅ Sovelluksella on oma app-ikoni (`Assets.xcassets/AppIcon`,
   1024×1024, täysin peittävä — ei alfaa, kuten iOS vaatii): vaalealla taustalla
+  **keltainen post-it-lappu** (kevyt kallistus + pehmeä varjo), jonka päällä
   checklist-tyylinen aihe — valintaruutu vihreällä ✓, ostoskärry ja
   hintalappu, kunkin vieressä listarivi. Ikoni generoidaan koodista
-  (`scripts`/CoreGraphics + SF Symbols) eikä sitä piirretä käsin.
+  (`scripts/makeicon.swift`, CoreGraphics + SF Symbols) eikä sitä piirretä käsin.
 - **Rajaukset:** ei kategorioita, ei useita listoja, ei käyttäjäkohtaisia
   oikeuksia jaon sisällä, ei Android-versiota.

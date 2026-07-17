@@ -31,7 +31,7 @@ struct ShoppingRowView: View {
                 Image(systemName: "line.3.horizontal")
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
-                    .frame(width: 18, height: 44)
+                    .frame(width: 18, height: 40)
                     .contentShape(Rectangle())
                     .highPriorityGesture(storeDrag)
                     .accessibilityLabel("Siirrä vetämällä")
@@ -53,52 +53,57 @@ struct ShoppingRowView: View {
             .onEnded { onStoreDrop?(item.objectID, $0.location) }
     }
 
+    /// One compact line under the name: store/shelf and price. Keeping the
+    /// price here (not trailing) keeps rows narrow and short so many fit.
+    private var detailLine: String? {
+        let price = (item.catalogPrice ?? "").isEmpty ? nil : item.catalogPrice
+        let parts = [storeSubtitle, price].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     private var rowContent: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
+                .font(.body)
                 .foregroundStyle(item.isDone ? Color.green : Color.secondary)
             // Store items reserve a fixed leading slot so their names align
             // whether or not an image loaded.
             if item.isFromStore {
-                thumbnail.frame(width: 32, height: 32)
+                thumbnail.frame(width: 26, height: 26)
             }
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(item.name)
+                    .font(.subheadline)
                     .strikethrough(item.isDone)
                     .foregroundStyle(item.isDone ? .secondary : .primary)
-                    .lineLimit(2)
-                if let subtitle = storeSubtitle {
-                    Text(subtitle)
+                    .lineLimit(1)
+                if let detail = detailLine {
+                    Text(detail)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .accessibilityIdentifier("store-\(item.name)")
                 }
             }
-            Spacer(minLength: 8)
-            if let price = item.catalogPrice, !price.isEmpty, !isScrubbing {
-                Text(price)
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Spacer(minLength: 6)
             if isScrubbing {
                 Text("× \(dragQuantity ?? Int(item.quantity))")
-                    .font(.headline.monospacedDigit())
+                    .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
                     .background(Color.accentColor, in: Capsule())
-                    .scaleEffect(1.25, anchor: .trailing)
+                    .scaleEffect(1.2, anchor: .trailing)
             } else if item.quantity > 1 {
                 Text("× \(item.quantity)")
-                    .font(.headline.monospacedDigit())
+                    .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
             if item.isFromStore {
                 Button { showingDetail = true } label: {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.tint)
-                        .frame(width: 40, height: 44)
+                        .frame(width: 32, height: 38)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)

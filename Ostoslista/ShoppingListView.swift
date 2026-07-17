@@ -30,7 +30,11 @@ struct ShoppingListView: View {
     @State private var dragSnapshot: [CGFloat] = []           // sibling row midYs (fixed)
     @State private var dragTargetStore: String?               // live drop store
     @State private var dragTargetIndex = 0                    // live drop slot in store
-    @State private var rowFrames: [RowFrame] = []             // live row extents
+    // Live row extents, held in a reference type so frame updates (which fire
+    // every animation frame) DON'T re-run `body`. Storing them in @State would
+    // re-render on every update, re-emitting the frame preferences, which never
+    // settle (sub-pixel jitter) — a tight loop that hangs the main thread.
+    @State private var frames = RowFrameStore()
 
     private var isUITest: Bool { ProcessInfo.processInfo.arguments.contains("-UITestReset") }
     private var isDragging: Bool { dragItem != nil }
@@ -38,6 +42,7 @@ struct ShoppingListView: View {
     /// Map a Y position in "list" space onto a store, clamping to the nearest
     /// section when the finger is above the first or below the last row.
     private func store(atY y: CGFloat) -> String? {
+        let rowFrames = frames.rows
         if let hit = rowFrames.first(where: { $0.rect.minY <= y && y <= $0.rect.maxY }) {
             return hit.store
         }
@@ -51,12 +56,13 @@ struct ShoppingListView: View {
     }
 
     /// A signature that changes whenever the rendered layout should re-animate:
-    /// each item's store/checked/order, plus the live drag target.
+    /// each item's store/checked/order, plus the live drag target. Built
+    /// straight from `items` (cheap) rather than from `displayGroups`, so it
+    /// doesn't re-run the grouping/sorting on every `body` pass.
     private var layoutSignature: String {
-        let base = displayGroups.flatMap { g in
-            g.items.map { "\($0.objectID.uriRepresentation().lastPathComponent):\(g.store):\($0.isDone ? 1 : 0)" }
-        }.joined(separator: "|")
-        return base + "#\(dragTargetStore ?? "-"):\(dragTargetIndex)"
+        items.map {
+            "\($0.objectID.uriRepresentation().lastPathComponent):\($0.storeName ?? "-"):\($0.isDone ? 1 : 0):\(Int($0.sortOrder))"
+        }.joined(separator: "|") + "#\(dragTargetStore ?? "-"):\(dragTargetIndex)"
     }
 
     private var appVersion: String {
@@ -162,6 +168,8 @@ struct ShoppingListView: View {
                             .shadow(color: .black.opacity(dragItem == item.objectID ? 0.18 : 0),
                                     radius: 6, y: 3)
                             .zIndex(dragItem == item.objectID ? 1 : 0)
+                            // Compact rows so many items fit on screen.
+                            .listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 10))
                             // Report each row's extent so the drag can be
                             // hit-tested against store sections and slots.
                             .background(GeometryReader { geo in
@@ -200,7 +208,9 @@ struct ShoppingListView: View {
             // Animate rows making room as the drag target moves, and items
             // flowing between store groups, by keying on the layout signature.
             .animation(.spring(duration: 0.3), value: layoutSignature)
-            .onPreferenceChange(RowFrameKey.self) { rowFrames = $0 }
+            .environment(\.defaultMinListRowHeight, 36)   // allow short rows
+            // Silently stash frames (no re-render — see `frames` declaration).
+            .onPreferenceChange(RowFrameKey.self) { frames.rows = $0 }
             // Floating ghost of the dragged item, tracking the finger. The
             // finger position is in global space, so convert it into this
             // overlay's local space via its own global origin.
@@ -364,9 +374,9 @@ struct ShoppingListView: View {
         if dragItem != id {
             dragItem = id
             dragStartStore = itemByID(id)?.storeName ?? ""
-            dragSnapshot = rowFrames
+            dragSnapshot = frames.rows
                 .filter { $0.store == dragStartStore }
-                .filter { frame in frame.id.map { !$0.isEqual(id) } ?? false }
+                .filter { row in row.id.map { !$0.isEqual(id) } ?? false }
                 .map(\.rect.midY)
                 .sorted()
             dragTargetStore = dragStartStore
@@ -482,6 +492,13 @@ private struct RowFrameKey: PreferenceKey {
     static func reduce(value: inout [RowFrame], nextValue: () -> [RowFrame]) {
         value.append(contentsOf: nextValue())
     }
+}
+
+/// Holds the latest row frames without being observable, so writing them from
+/// `onPreferenceChange` never triggers a view update. The drag gesture reads
+/// them on demand; `body` never does.
+private final class RowFrameStore {
+    var rows: [RowFrame] = []
 }
 
 /// Empty store section shown only during a drag, so a free item can be dropped

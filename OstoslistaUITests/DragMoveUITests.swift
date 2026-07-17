@@ -108,4 +108,38 @@ final class DragMoveUITests: XCTestCase {
         XCTAssertFalse(element("handle-juusto").exists,
                        "catalog item must not have a drag handle")
     }
+
+    /// Regression: scrubbing a catalog item's quantity high used to hang the
+    /// app (row-frame updates re-rendered the view in a loop). It must stay
+    /// responsive — proven by adding another item afterwards.
+    func testQuantityScrubStaysResponsive() throws {
+        launch(seed: "ruuvi|K-Rauta|cat")
+        let ruuvi = app.staticTexts["ruuvi"]
+        XCTAssertTrue(ruuvi.waitForExistence(timeout: 10))
+
+        // Long rightward drag on the row raises the quantity a lot.
+        let start = ruuvi.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let end = ruuvi.coordinate(withNormalizedOffset: CGVector(dx: 6.5, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: end)
+
+        addFreeItem("maito")
+        XCTAssertTrue(app.staticTexts["maito"].waitForExistence(timeout: 8),
+                      "app hung after quantity scrub")
+    }
+
+    /// Regression: the app must stay responsive after a drag-drop — add an
+    /// item once the drop settles and confirm it appears.
+    func testResponsiveAfterDrop() throws {
+        launch(seed: "maito|Prisma;leipä|K-Market")
+        addFreeItem("sokeri")
+
+        let handle = element("handle-sokeri")
+        XCTAssertTrue(handle.waitForExistence(timeout: 10))
+        handle.press(forDuration: 1.0, thenDragTo: element("store-maito"))
+        XCTAssertTrue(element("store-sokeri").waitForExistence(timeout: 5), "drop failed")
+
+        addFreeItem("kahvi")
+        XCTAssertTrue(app.staticTexts["kahvi"].waitForExistence(timeout: 8),
+                      "app hung after drop")
+    }
 }
