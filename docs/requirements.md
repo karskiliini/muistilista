@@ -92,8 +92,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   haetaan dynaamisesti sivulta koska se vanhenee), Tokmanni (Klevu,
   klusteri eucs11), K-Rauta (hakusivun HTML parsitaan; sisältää oikean
   hyllypaikan osasto+hyllynumero muodossa) ja Motonet
-  (`/api/suggestions`, kuva Broman-CDN:stä tuotekoodilla). Ainoa
-  toteuttamatta jäävä on **Kesko** (K-ruokakaupat), joka vaatii käyttäjän
+  (`/api/suggestions`, kuva Broman-CDN:stä tuotekoodilla). Loput kaupat
+  eivät ole appista rakennettavissa (selvitetty 17.7.2026): **K-ruoka**
+  (K-Citymarket/K-Supermarket/K-Market) on Cloudflaren bottisuojauksen
+  takana — vain oikea selain läpäisee, URLSession saa 403/haaste; sen
+  kauppahaku sijainnilla toimisi periaatteessa (POST /kr-api/stores/search
+  {latitude,longitude}) mutta jää suojauksen taakse. **Lidl** ei myy ruokaa
+  verkossa (vain tarjoukset), joten haettavaa katalogia ei ole. K-ruokan
+  ainoa avoin reitti on virallinen **Kesko-API**, joka vaatii käyttäjän
   ilmaisen
   developer.kesko.fi-avaimen — sille käytetään vapaasanalisäystä kunnes
   avain on annettu. Vapaasanalisäys päänäkymässä ei muutu tästä millään
