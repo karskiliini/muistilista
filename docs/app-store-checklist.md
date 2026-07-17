@@ -64,3 +64,54 @@ Store -jakelu muuttaa tilanteen** — henkilökohtaisen käytön peruste ei enä
 
 Koodi/konfiguraatio on teknisesti valmis; tämä on liiketoiminta-/laillisuus­päätös
 joka sinun pitää tehdä ennen kuin lähetän mitään arviointiin puolestasi.
+
+## Valmiit materiaalit (repo)
+
+- **Kuvakaappaus (6.9"):** `docs/app-store/screenshot-01-list-6.9.png` (1320×2868).
+  Tee lisää tällä komennolla (vaihda `UITEST_ITEMS` haluamaksesi demodataksi):
+  ```sh
+  UDID=$(xcrun simctl list devices available | grep "iPhone 17 Pro Max" | grep -oE "[0-9A-F-]{36}" | head -1)
+  xcrun simctl boot "$UDID"; open -a Simulator
+  xcodebuild -scheme Ostoslista -destination "id=$UDID" -derivedDataPath build/sim build
+  xcrun simctl install "$UDID" build/sim/Build/Products/Debug-iphonesimulator/Ostoslista.app
+  SIMCTL_CHILD_UITEST_ITEMS="maito|Prisma|cat|1,45;leipä|Prisma;paristot|Gigantti|cat|9,90" \
+    xcrun simctl launch "$UDID" fi.maaranen.ostoslista -Screenshots
+  xcrun simctl io "$UDID" screenshot kuva.png
+  ```
+  (`-Screenshots` = puhdas demotila: seedattu data, ei debug-tekstiä eikä lupakyselyitä.)
+- **Tekstit:** `docs/app-store/metadata.md` (nimi, alaotsikko, avainsanat, kuvaus).
+- **Tietosuojaseloste:** `docs/app-store/privacy-policy.md` — julkaise julkiseen
+  osoitteeseen ja liitä URL App Store Connectiin.
+- **Vientiasetukset:** `ExportOptions-AppStore.plist`.
+
+## Tarkat komennot
+
+**CloudKit-skeema tuotantoon** — helpoiten CloudKit Dashboardissa
+(icloud.developer.apple.com → container `iCloud.fi.maaranen.ostoslista` →
+Deploy Schema Changes → Production). Komentoriviltä `xcrun cktool` vaatii
+management-tokenin, jonka luot Dashboardissa.
+
+**Arkistoi + vie App Storelle:**
+```sh
+xcodebuild -project Ostoslista.xcodeproj -scheme Ostoslista \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -archivePath build/Ostoslista.xcarchive archive -allowProvisioningUpdates
+xcodebuild -exportArchive -archivePath build/Ostoslista.xcarchive \
+  -exportOptionsPlist ExportOptions-AppStore.plist \
+  -exportPath build/export -allowProvisioningUpdates
+```
+Tämä vaatii Apple Distribution -sertifikaatin (Xcode luo sen automaattisesti
+kun olet kirjautunut ohjelmatilillä). Vaihtoehtoisesti tee koko homma
+**Xcode → Product → Archive → Distribute App**, joka on suoraviivaisin.
+
+**Lataa App Store Connectiin** (tarvitset oman App Store Connect API -avaimen:
+issuer id, key id, `AuthKey_XXXX.p8`):
+```sh
+xcrun altool --upload-app -f build/export/Ostoslista.ipa -t ios \
+  --apiKey KEY_ID --apiIssuer ISSUER_ID
+```
+Tai lataa suoraan Xcode Organizerista (kirjautuu puolestasi).
+
+Näihin kolmeen viimeiseen (CloudKit-token, jakelu­sertifikaatti, App Store
+Connect -kirjautuminen) tarvitaan sinun Apple-tunnuksesi — en voi kirjautua
+tililläsi enkä painaa "Submit"-nappia puolestasi.

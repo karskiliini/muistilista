@@ -23,11 +23,15 @@ final class StoreProvider: ObservableObject {
     private var remoteChangeNotifier: RemoteChangeNotifier?
 
     init() {
-        // UI tests run against a throwaway in-memory store so each launch
-        // starts empty and never touches the user's real data or CloudKit.
-        let uiTest = ProcessInfo.processInfo.arguments.contains("-UITestReset")
-        container = CoreDataStack.container(inMemory: uiTest, cloudKit: !uiTest)
-        if uiTest { Self.seedForUITests(container.viewContext) }
+        // UI tests and screenshot runs use a throwaway in-memory store so each
+        // launch starts clean and never touches the user's real data/CloudKit.
+        let args = ProcessInfo.processInfo.arguments
+        let ephemeral = args.contains("-UITestReset") || args.contains("-Screenshots")
+        container = CoreDataStack.container(inMemory: ephemeral, cloudKit: !ephemeral)
+        if ephemeral {
+            UserDefaults.standard.removeObject(forKey: "lastStoreName")   // deterministic picker
+            Self.seedForUITests(container.viewContext)
+        }
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
         AppStores.provider = self
         Task { @MainActor in self.ensureList() }
@@ -78,8 +82,9 @@ final class StoreProvider: ObservableObject {
             let opts = parts.count > 2 ? parts[2] : ""
             if opts.contains("cat") {
                 item.fromCatalog = true
-                item.catalogPrice = "1,99 €"
-                item.priceValue = 1.99
+                let priceStr = parts.count > 3 && !parts[3].isEmpty ? parts[3] : "1,99"
+                item.catalogPrice = priceStr + " €"
+                item.priceValue = Double(priceStr.replacingOccurrences(of: ",", with: ".")) ?? 1.99
             }
             if opts.contains("done") { item.isDone = true }
         }

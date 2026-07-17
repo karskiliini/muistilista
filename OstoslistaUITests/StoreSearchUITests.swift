@@ -20,7 +20,7 @@ final class StoreSearchUITests: XCTestCase {
         let picker = app.descendants(matching: .any).matching(identifier: "store-picker").firstMatch
         XCTAssertTrue(picker.waitForExistence(timeout: 5), "store picker missing")
         picker.tap()
-        let gigantti = app.buttons["Gigantti"]
+        let gigantti = app.buttons["Gigantti"].firstMatch
         XCTAssertTrue(gigantti.waitForExistence(timeout: 5), "Gigantti option missing")
         gigantti.tap()
 

@@ -14,6 +14,9 @@ final class PushDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCen
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Skip push setup (and its permission prompt) in screenshot/UI-test runs.
+        let args = ProcessInfo.processInfo.arguments
+        guard !args.contains("-Screenshots"), !args.contains("-UITestReset") else { return true }
         application.registerForRemoteNotifications()
         registerSubscription()
         let center = UNUserNotificationCenter.current()

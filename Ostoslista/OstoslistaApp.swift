@@ -10,10 +10,14 @@ struct OstoslistaApp: App {
     init() {
         CrashReporter.install()
         // Warm the web engines (K-ruoka, Gigantti) so their first search is
-        // fast — both need a WKWebView to pass their bot challenge.
-        Task { @MainActor in
-            KRuokaWebEngine.shared.warmUp()
-            GigantiWebEngine.shared.warmUp()
+        // fast — both need a WKWebView to pass their bot challenge. Skipped in
+        // screenshot/UI-test runs (avoids the location/network prompts).
+        let args = ProcessInfo.processInfo.arguments
+        if !args.contains("-Screenshots"), !args.contains("-UITestReset") {
+            Task { @MainActor in
+                KRuokaWebEngine.shared.warmUp()
+                GigantiWebEngine.shared.warmUp()
+            }
         }
     }
 
