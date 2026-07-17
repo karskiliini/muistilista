@@ -3,8 +3,9 @@ import XCTest
 /// Drives the store drag-and-drop with faked press-then-slide gestures in the
 /// Simulator, so its data outcomes are proven here instead of by shipping and
 /// asking the user to test on-device. These verify WHERE items land (store and
-/// order); the live feel (lift, ghost, rows making room) is a visual matter the
-/// user confirms on device.
+/// order) and that catalog items stay locked; the live feel is a visual matter
+/// the user confirms on device. Store fixtures are seeded via UITEST_ITEMS so
+/// the tests don't depend on the (removed) ⋯ menu or live catalogs.
 final class DragMoveUITests: XCTestCase {
     private var app: XCUIApplication!
 
@@ -12,11 +13,16 @@ final class DragMoveUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments += ["-UITestReset"]
+    }
+
+    /// Launch, optionally pre-seeding items ("name|store|opt;..." — empty store
+    /// = no store, opt "cat" = catalog/store-bound).
+    private func launch(seed: String = "") {
+        if !seed.isEmpty { app.launchEnvironment["UITEST_ITEMS"] = seed }
         app.launch()
     }
 
-    /// Any element with the given identifier, regardless of type — the handle
-    /// is an Image, a subtitle a static text; a type-agnostic lookup is robust.
+    /// Any element with the given identifier, regardless of type.
     private func element(_ id: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
@@ -28,22 +34,14 @@ final class DragMoveUITests: XCTestCase {
         field.typeText("\(name)\n")
     }
 
-    /// Assign an item to a store through the ⋯ actions menu.
-    private func moveToStoreViaMenu(item: String, store: String) {
-        element("actions-\(item)").tap()
-        app.buttons["Siirrä kauppaan"].tap()
-        app.buttons[store].tap()
-    }
-
     /// Dragging a free item onto another store's section moves it there.
     func testDragFreeItemOntoStoreGroupMovesIt() throws {
-        addFreeItem("maito")
+        launch(seed: "maito|Prisma")
         addFreeItem("sokeri")
 
-        moveToStoreViaMenu(item: "maito", store: "Prisma")
         let maitoStore = element("store-maito")
-        XCTAssertTrue(maitoStore.waitForExistence(timeout: 5))
-        XCTAssertEqual(maitoStore.label, "Prisma", "Setup failed: maito not in Prisma")
+        XCTAssertTrue(maitoStore.waitForExistence(timeout: 5), "seed failed")
+        XCTAssertEqual(maitoStore.label, "Prisma")
         XCTAssertFalse(element("store-sokeri").exists, "sokeri should start store-less")
 
         let handle = element("handle-sokeri")
@@ -56,9 +54,10 @@ final class DragMoveUITests: XCTestCase {
         XCTAssertEqual(sokeriStore.label, "Prisma", "sokeri did not move to Prisma")
     }
 
-    /// Dragging an item within its own group reorders it rather than moving it
-    /// to another store. Dropped at the bottom, it becomes last.
+    /// Dragging an item within its own group reorders it. Dropped at the
+    /// bottom, it becomes last.
     func testDragReordersWithinGroup() throws {
+        launch()
         addFreeItem("alfa")
         addFreeItem("beeta")
         addFreeItem("gamma")
@@ -81,14 +80,13 @@ final class DragMoveUITests: XCTestCase {
                           "alfa should now be last (debug: \(bottom.label))")
     }
 
-    /// A stored item dragged down to the bottom lands in the "Ei kauppaa" zone
-    /// (which is always available during a drag) and loses its store.
+    /// A stored item dragged to the bottom lands in the always-available
+    /// "Ei kauppaa" zone and loses its store.
     func testDragToNoStoreClearsStore() throws {
-        addFreeItem("maito")
-        moveToStoreViaMenu(item: "maito", store: "Prisma")
+        launch(seed: "maito|Prisma")
         let maitoStore = element("store-maito")
         XCTAssertTrue(maitoStore.waitForExistence(timeout: 5))
-        XCTAssertEqual(maitoStore.label, "Prisma", "Setup failed: maito not in Prisma")
+        XCTAssertEqual(maitoStore.label, "Prisma")
 
         let handle = element("handle-maito")
         XCTAssertTrue(handle.waitForExistence(timeout: 5))
@@ -96,5 +94,18 @@ final class DragMoveUITests: XCTestCase {
 
         XCTAssertFalse(element("store-maito").waitForExistence(timeout: 3),
                        "maito should have lost its store (debug: \(element("debug-drop").label))")
+    }
+
+    /// Catalog (store-bound) items must not be draggable between stores — they
+    /// have no drag handle at all.
+    func testCatalogItemHasNoDragHandle() throws {
+        launch(seed: "juusto|Prisma|cat;maito|Prisma")
+
+        // Both items are in the Prisma section...
+        XCTAssertTrue(element("store-juusto").waitForExistence(timeout: 5), "juusto not shown")
+        // ...but only the free-text one has a handle.
+        XCTAssertTrue(element("handle-maito").exists, "free item should have a handle")
+        XCTAssertFalse(element("handle-juusto").exists,
+                       "catalog item must not have a drag handle")
     }
 }

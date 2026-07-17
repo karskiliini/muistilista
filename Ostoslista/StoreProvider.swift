@@ -27,6 +27,7 @@ final class StoreProvider: ObservableObject {
         // starts empty and never touches the user's real data or CloudKit.
         let uiTest = ProcessInfo.processInfo.arguments.contains("-UITestReset")
         container = CoreDataStack.container(inMemory: uiTest, cloudKit: !uiTest)
+        if uiTest { Self.seedForUITests(container.viewContext) }
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
         AppStores.provider = self
         Task { @MainActor in self.ensureList() }
@@ -59,6 +60,28 @@ final class StoreProvider: ObservableObject {
             Task { @MainActor in await self?.refreshFromCloud() }
         }
         #endif
+    }
+
+    /// Seed deterministic items for UI tests from the `UITEST_ITEMS`
+    /// environment variable: entries "name|store|opt" separated by ";", where
+    /// an empty store means no store and opt "cat" marks a catalog (store-
+    /// bound) item. Keeps tests independent of live catalogs and network.
+    static func seedForUITests(_ context: NSManagedObjectContext) {
+        guard let seed = ProcessInfo.processInfo.environment["UITEST_ITEMS"] else { return }
+        for entry in seed.split(separator: ";") {
+            let parts = entry.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            guard let name = parts.first, !name.isEmpty else { continue }
+            let item = CDShoppingItem(context: context)
+            item.name = name
+            let store = parts.count > 1 ? parts[1] : ""
+            if !store.isEmpty { item.storeName = store }
+            if parts.count > 2, parts[2] == "cat" {
+                item.fromCatalog = true
+                item.catalogPrice = "1,99 €"
+                item.priceValue = 1.99
+            }
+        }
+        try? context.save()
     }
 
     /// Pull-to-refresh: refresh + hold the spinner briefly while the import lands.

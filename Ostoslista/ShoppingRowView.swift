@@ -22,18 +22,16 @@ struct ShoppingRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Drag handle — only for free-text items, since catalog products
-            // are tied to their store and can't move. It sits OUTSIDE the
-            // content's context menu so long-pressing it starts the drag
-            // rather than opening the menu.
+        HStack(spacing: 4) {
+            // Slim drag handle — only for free-text items, since catalog
+            // products are tied to their store and can't move. A narrow grip
+            // keeps rows compact; the tap area stays tall enough to grab and
+            // still wins the drag over the List's own scrolling.
             if item.canChangeStore {
                 Image(systemName: "line.3.horizontal")
-                    .font(.callout)
-                    .foregroundStyle(.tertiary)
-                    // A generous, opaque touch target so the drag is easy to
-                    // grab and reliably wins over the List's own scrolling.
-                    .frame(width: 34, height: 40)
+                    .font(.caption2)
+                    .foregroundStyle(.quaternary)
+                    .frame(width: 18, height: 44)
                     .contentShape(Rectangle())
                     .highPriorityGesture(storeDrag)
                     .accessibilityLabel("Siirrä vetämällä")
@@ -106,7 +104,6 @@ struct ShoppingRowView: View {
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Tuotetiedot")
             }
-            actionsMenu
         }
         .animation(.spring(duration: 0.2), value: dragQuantity)
         .contentShape(Rectangle())
@@ -122,43 +119,6 @@ struct ShoppingRowView: View {
             @unknown default: break
             }
         }
-    }
-
-    /// Tap-triggered actions menu (⋯) — replaces the long-press context menu
-    /// so long-pressing the drag handle starts a drag instead of the menu.
-    private var actionsMenu: some View {
-        Menu {
-            Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
-            Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
-                .disabled(item.quantity <= 1)
-            if item.canChangeStore {
-                Menu {
-                    ForEach(Stores.groups) { group in
-                        Section(group.name) {
-                            ForEach(group.stores, id: \.self) { name in
-                                Button(name) { moveToStore(name) }
-                            }
-                        }
-                    }
-                    Divider()
-                    Button("Ei kauppaa") { moveToStore("") }
-                } label: {
-                    Label("Siirrä kauppaan", systemImage: "arrow.left.arrow.right")
-                }
-            }
-            Divider()
-            Button(role: .destructive) { deleteSelf() } label: {
-                Label("Poista tuote", systemImage: "trash")
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .foregroundStyle(.secondary)
-                .frame(width: 40, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .accessibilityLabel("Toiminnot")
-        .accessibilityIdentifier("actions-\(item.name)")
     }
 
     private var thumbnail: some View {
@@ -178,18 +138,6 @@ struct ShoppingRowView: View {
 
     private func changeQuantity(_ delta: Int) {
         item.quantity = Int64(max(1, Int(item.quantity) + delta))
-        try? item.managedObjectContext?.save()
-    }
-
-    private func deleteSelf() {
-        let context = item.managedObjectContext
-        context?.delete(item)
-        try? context?.save()
-    }
-
-    /// Reassign the item to another store's group (empty = "Muut").
-    private func moveToStore(_ name: String) {
-        item.storeName = name.isEmpty ? nil : name
         try? item.managedObjectContext?.save()
     }
 

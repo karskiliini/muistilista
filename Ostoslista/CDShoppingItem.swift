@@ -16,8 +16,12 @@ final class CDShoppingItem: NSManagedObject {
     @NSManaged var sortOrder: Double         // manual drag order within a group
 
     /// Catalog products are tied to their store and can't be moved; only
-    /// free-text items can change store.
-    var canChangeStore: Bool { !fromCatalog }
+    /// free-text items can change store. Anything carrying catalog data — the
+    /// flag, a price, or images — counts as store-bound, which also locks
+    /// legacy catalog rows saved before `fromCatalog` existed.
+    var canChangeStore: Bool {
+        !fromCatalog && (catalogPrice ?? "").isEmpty && (imageURLsString ?? "").isEmpty
+    }
     @NSManaged var productDescription: String?
     @NSManaged var imageURLsString: String?
 

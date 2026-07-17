@@ -358,4 +358,27 @@ final class ShoppingListLogicTests: XCTestCase {
         XCTAssertEqual(fetched.first?.quantity, 3)
         XCTAssertEqual(fetched.first?.isDone, false)
     }
+
+    func testCanChangeStoreOnlyForFreeTextItems() {
+        let container = CoreDataStack.container(inMemory: true)
+        let context = container.viewContext
+
+        let free = CDShoppingItem(context: context)
+        free.name = "maito"
+        XCTAssertTrue(free.canChangeStore, "plain free-text item should be movable")
+
+        let flagged = CDShoppingItem(context: context)
+        flagged.name = "juusto"; flagged.fromCatalog = true
+        XCTAssertFalse(flagged.canChangeStore, "flagged catalog item is locked")
+
+        // Legacy catalog rows saved before the flag existed still carry
+        // catalog data, so they stay locked too.
+        let legacyPriced = CDShoppingItem(context: context)
+        legacyPriced.name = "leipä"; legacyPriced.catalogPrice = "2,49 €"
+        XCTAssertFalse(legacyPriced.canChangeStore, "priced catalog item is locked")
+
+        let legacyImaged = CDShoppingItem(context: context)
+        legacyImaged.name = "kahvi"; legacyImaged.imageURLsString = "https://x/y.png"
+        XCTAssertFalse(legacyImaged.canChangeStore, "imaged catalog item is locked")
+    }
 }

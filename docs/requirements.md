@@ -75,11 +75,14 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
-- **R31** ✅ Rivin oikeassa laidassa on "⋯"-toimintonappi (napautettava,
-  ei pitkä painallus — jotta vasemman laidan drag handlen pitkä painallus
-  aloittaa vedon eikä avaa valikkoa). Valikossa: määrän lisäys/vähennys,
-  "Siirrä kauppaan" -alavalikko (vain vapaatuotteille; tapa siirtää tuote
-  kauppaan jota ei vielä ole listalla) ja "Poista tuote".
+- **R31** ✅ Rivit pidetään tiiviinä: erillistä "⋯"-toimintonappia **ei ole**
+  (poistettu käyttäjän pyynnöstä — vei liikaa tilaa). Sen toiminnot löytyvät
+  muualta: määrän säätö vedolla (R9), poisto oikealle pyyhkäisemällä (R8) ja
+  kaupan vaihto drag handlesta vetämällä (R32). Vasemman laidan drag handle on
+  **kapea** (vie vähän tilaa) mutta riittävän korkea tartuttavaksi.
+  Tuotteen siirto kauppaan jota ei vielä ole listalla tapahtuu lisäämällä
+  tuote siihen kauppaan kauppahaun kautta (R23); drag-veto kohdistuu listalla
+  jo näkyviin kauppoihin ja "Ei kauppaa" -vyöhykkeeseen.
 - **R32** ✅ Tuotteita voi järjestellä ja siirtää vetämällä rivin vasemman
   laidan drag handlesta. Vedon aikana:
   - vedettävä rivi **nousee** (skaalaus + varjo) ja **haamu-esikatselu**
@@ -93,10 +96,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   - **"Ei kauppaa" -pudotusvyöhyke** on aina näkyvissä alimpana vedon aikana,
     joten vapaatuotteen voi aina pudottaa takaisin kaupattomaksi;
   - pudotuksen jälkeen näkymä keskittyy siirrettyyn tuotteeseen.
-  **Kauppasidonnaiset (katalogista lisätyt) tuotteet ovat lukittuja omaan
-  kauppaansa** — niillä ei ole drag handlea (vain vapaatuotteita voi vetää).
-  Tuotteen voi siirtää mihin tahansa kauppaan — myös sellaiseen jota ei vielä
-  ole listalla — rivin "⋯"-valikon "Siirrä kauppaan" -kohdasta.
+  **Vain vapaatekstituotteita voi vetää; kauppasidonnaiset (katalogista
+  lisätyt) tuotteet ovat lukittuja omaan kauppaansa** eikä niillä ole drag
+  handlea. Lukitus koskee myös vanhoja katalogirivejä jotka on tallennettu
+  ennen `fromCatalog`-lippua: tuote katsotaan kauppasidonnaiseksi jos sillä on
+  lippu, katalogihinta tai kuvia (`canChangeStore`).
   **Toteutus:** oma `DragGesture` (ei SwiftUI:n `.draggable`/`.dropDestination`
   -paria, joka ei koskaan käynnistynyt tämän `List`in sisällä). Sormen sijainti
   ja rivikehykset luetaan **samassa `.global`-koordinaatistossa** (List-solun
@@ -106,7 +110,8 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ruoki itseään.
   **Varmennettu automaattisilla UI-testeillä** (`OstoslistaUITests`), jotka
   simuloivat painallus-ja-veto-eleen emulaattorissa: vapaa tuote siirtyy
-  kauppaan, järjestyy ryhmänsä sisällä ja palautuu kaupattomaksi.
+  kauppaan, järjestyy ryhmänsä sisällä, palautuu kaupattomaksi, eikä
+  kauppasidonnaisella tuotteella ole handlea.
 - **R30** ✅ Lista on ryhmitelty kaupoittain: jokainen kauppa on oma osionsa
   (otsakkeessa kaupan nimi ja ostetut/kaikki-luku). Kaupan alaosassa näkyy
   sen tuotteiden yhteenlaskettu hinta (hinta × määrä), ja aivan listan
@@ -203,6 +208,12 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   vuorovaikutukset (kuten kaupan vaihto vetämällä, R32) varmennetaan
   XCUITest-UI-testeillä (`OstoslistaUITests`), jotka ajetaan emulaattorissa
   in-memory-tallennuksella (`-UITestReset`), jotta ne eivät koske oikeaa dataa
-  eivätkä CloudKitiä.
+  eivätkä CloudKitiä. Testien tuotteet syötetään `UITEST_ITEMS`-
+  ympäristömuuttujalla, jotta ne eivät riipu verkosta.
+- **R33** ✅ Sovelluksella on oma app-ikoni (`Assets.xcassets/AppIcon`,
+  1024×1024, täysin peittävä — ei alfaa, kuten iOS vaatii): vaalealla taustalla
+  checklist-tyylinen aihe — valintaruutu vihreällä ✓, ostoskärry ja
+  hintalappu, kunkin vieressä listarivi. Ikoni generoidaan koodista
+  (`scripts`/CoreGraphics + SF Symbols) eikä sitä piirretä käsin.
 - **Rajaukset:** ei kategorioita, ei useita listoja, ei käyttäjäkohtaisia
   oikeuksia jaon sisällä, ei Android-versiota.
