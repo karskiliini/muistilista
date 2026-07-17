@@ -24,10 +24,10 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   "ostetut / kaikki" (esim. "3 / 8").
 - **R7** ✅ Työkalurivin painike "Tyhjennä ostetut" poistaa kaikki ostetut
   rivit kerralla. Painike on estetty, kun ostettuja ei ole.
-- **R8** ✅ Tuotteen voi poistaa rivin pitkän painalluksen valikosta
-  ("Poista tuote"). Ostetun (ruksatun) rivin voi poistaa myös vetämällä
-  vasemmalle. Ostamattomilla riveillä vaakaveto on varattu määrän
-  säädölle (R9), joten niiden poisto tapahtuu valikosta.
+- **R8** ✅ Rivin voi poistaa vetämällä vasemmalle (järjestelmän
+  pyyhkäisypoisto) — tämä toimii kaikilla riveillä. Poiston voi tehdä myös
+  rivin pitkän painalluksen valikosta ("Poista tuote"). (Määrän säätö R9
+  toimii samalla rivillä vaakavedolla.)
 - **R9** ✅ Kappalemäärän säätö vedolla: ostamattoman rivin vaakaveto rivin
   rungosta säätää määrää — oikealle nostaa, **vasemmalle laskee heti** —
   yhden askeleen per 36 pt, minimi 1; siniseen "× N" -pilleriin päivittyvä
@@ -74,6 +74,10 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   (esim. "+ maito · ~ leipä · – 1 rivi") — myös sovelluksen ollessa
   etualalla. Ilmoituksen napautus avaa sovelluksen. Omista, samalla
   laitteella tehdyistä muutoksista ei ilmoiteta.
+- **R29** ✅ Kauppanäkymän hakutulosriviä voi napauttaa (avaa detail-näkymän)
+  TAI pyyhkäistä: vasemmalle pyyhkäisy lisää tuotteen suoraan listalle
+  (1 kpl, ei detail-näkymän kautta), oikealle pyyhkäisy tarjoaa pikavalinnat
+  useamman kappaleen lisäämiseen kerralla (2/3/6 kpl).
 - **R28** 🔄 K-ruokakaupat (K-Citymarket/K-Supermarket/K-Market) haetaan
   laitteella olevan piiloselaimen (WKWebView) kautta, koska k-ruoka.fi on
   Cloudflaren takana eikä URLSession pääse läpi. Moottori esiladataan

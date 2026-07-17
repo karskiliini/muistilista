@@ -112,6 +112,20 @@ struct StoreAddView: View {
                     } label: {
                         CatalogRow(product: product)
                     }
+                    // Swipe left → add one straight to the list (skip the
+                    // product page).
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button { addCatalog(product, quantity: 1) } label: {
+                            Label("Lisää", systemImage: "cart.badge.plus")
+                        }
+                        .tint(.green)
+                    }
+                    // Swipe right → add several at once.
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        Button { addCatalog(product, quantity: 2) } label: { Text("2 kpl") }.tint(.blue)
+                        Button { addCatalog(product, quantity: 3) } label: { Text("3 kpl") }.tint(.indigo)
+                        Button { addCatalog(product, quantity: 6) } label: { Text("6 kpl") }.tint(.purple)
+                    }
                 }
             } else if ShoppingListLogic.normalized(productName) != nil {
                 Text("Ei osumia").foregroundStyle(.secondary)
@@ -149,25 +163,26 @@ struct StoreAddView: View {
         }
     }
 
-    private func addCatalog(_ product: CatalogProduct) {
+    private func addCatalog(_ product: CatalogProduct, quantity: Int = 1) {
         // Shelf comes from the chain's own data (nil for stores that don't
         // publish it) — never typed by the user.
-        insert(name: product.name, shelf: product.shelfLocation, catalog: product)
+        insert(name: product.name, shelf: product.shelfLocation, catalog: product, quantity: quantity)
     }
 
     private func addManual() {
         guard let name = ShoppingListLogic.normalized(productName) else { return }
-        insert(name: name, shelf: nil, catalog: nil)
+        insert(name: name, shelf: nil, catalog: nil, quantity: 1)
     }
 
     /// Shared insert: item lands in the list's store and carries the
     /// catalog's price/description/images/shelf when present. Adding one
     /// item closes the store view and hands the new item's ID back so the
     /// list can scroll to it.
-    private func insert(name: String, shelf: String?, catalog: CatalogProduct?) {
+    private func insert(name: String, shelf: String?, catalog: CatalogProduct?, quantity: Int) {
         guard let storeTrimmed = ShoppingListLogic.normalized(storeName) else { return }
         let item = CDShoppingItem(context: context)
         item.name = name
+        item.quantity = Int64(max(1, quantity))
         item.storeName = storeTrimmed
         item.shelfLocation = shelf
         item.catalogPrice = catalog?.priceText

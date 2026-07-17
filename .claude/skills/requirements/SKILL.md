@@ -21,7 +21,13 @@ parts). That only stays true if every behavioral prompt lands in the register
      *current* desired behavior. The register is not a changelog; git history
      remembers the old version. (The quantity-drag interaction was reshaped
      three times in one day — the requirement describes only the final form.)
-   - **Removed behavior** — delete the requirement.
+   - **Removed behavior** — do NOT delete or weaken a requirement on your
+     own. Even when a new prompt seems to replace or drop old behavior, a
+     requirement may only be removed or narrowed with the user's **explicit
+     approval**. If a change looks like it removes a requirement, ask first;
+     otherwise keep the requirement and add/adjust alongside it. (This rule
+     exists because silently dropping R8's swipe-to-delete broke a feature
+     the user still relied on.)
 3. Set the status: ✅ toteutettu, 🔄 työn alla, or 📋 suunniteltu. Update the
    status when a feature ships — a register full of stale 🔄 rows stops being
    trusted.
