@@ -28,10 +28,14 @@ Ostoslista pitää ruokaostokset järjestyksessä ja jaettuna koko perheelle.
 Tiedot tallentuvat omaan iCloudiisi. Ei mainoksia, ei tilejä.
 
 ## Tukisivun URL
-(täytä oma tuki-/yhteydenotto-URL — esim. GitHub-repo tai sähköpostisivu)
+https://karskiliini.github.io/ostoslista-pub/
 
 ## Tietosuojaseloste-URL
-(pakollinen — julkaise docs/app-store/privacy-policy.md julkiseen osoitteeseen ja liitä URL tähän)
+https://karskiliini.github.io/ostoslista-pub/privacy.html
+
+(Molemmat sivut ovat julkaistuna repossa https://github.com/karskiliini/ostoslista-pub
+GitHub Pagesin kautta. Muokataksesi tekstejä: muokkaa `index.html` /
+`privacy.html` siinä repossa ja pushaa — Pages päivittyy automaattisesti.)
 
 ## App Privacy (nutrition labels) -vastaukset
 - Kerätäänkö dataa? Käytännössä ei kehittäjän toimesta:
