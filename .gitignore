@@ -2,3 +2,7 @@
 *.xcodeproj
 build/
 DerivedData/
+
+# stray scratch files
+*.html
+!Ostoslista*/**
