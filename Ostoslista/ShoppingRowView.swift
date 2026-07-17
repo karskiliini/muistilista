@@ -65,11 +65,6 @@ struct ShoppingRowView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Tuotetiedot")
-            } else {
-                // Hint: this edge pulls left to delete (system swipe action).
-                Image(systemName: "chevron.compact.left")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(.tertiary)
             }
         }
         .animation(.spring(duration: 0.2), value: dragQuantity)
@@ -83,6 +78,10 @@ struct ShoppingRowView: View {
             Button { changeQuantity(+1) } label: { Label("Lisää määrää", systemImage: "plus") }
             Button { changeQuantity(-1) } label: { Label("Vähennä määrää", systemImage: "minus") }
                 .disabled(item.quantity <= 1)
+            Divider()
+            Button(role: .destructive) { deleteSelf() } label: {
+                Label("Poista tuote", systemImage: "trash")
+            }
         }
         // VoiceOver: swipe up/down adjusts quantity.
         .accessibilityValue(item.quantity > 1 ? "\(item.quantity) kappaletta" : "")
@@ -115,17 +114,23 @@ struct ShoppingRowView: View {
         try? item.managedObjectContext?.save()
     }
 
+    private func deleteSelf() {
+        let context = item.managedObjectContext
+        context?.delete(item)
+        try? context?.save()
+    }
+
     private var quantityDrag: some Gesture {
         DragGesture(minimumDistance: 25)
             .onChanged { value in
                 // Checked items keep their final quantity — no scrubbing.
                 guard !item.isDone else { return }
-                // Activate only on a drag that starts rightward and mostly
-                // horizontal; leftward drags belong to swipe-to-delete and
-                // vertical ones to scrolling.
+                // Activate on any mostly-horizontal drag — rightward raises
+                // the quantity, leftward lowers it immediately. (Vertical
+                // drags are left to scrolling.)
                 if dragQuantity == nil {
-                    guard value.translation.width > 0,
-                          abs(value.translation.width) > abs(value.translation.height)
+                    guard abs(value.translation.width) > abs(value.translation.height),
+                          abs(value.translation.width) > 4
                     else { return }
                 }
                 dragQuantity = ShoppingListLogic.quantity(

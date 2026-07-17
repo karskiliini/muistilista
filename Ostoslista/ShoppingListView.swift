@@ -60,6 +60,10 @@ struct ShoppingListView: View {
                                 save()
                             }
                             .id(item.objectID)
+                            // Unchecked rows use the left/right drag for
+                            // quantity, so their delete moves to the
+                            // long-press menu; checked rows keep swipe-delete.
+                            .deleteDisabled(!item.isDone)
                         }
                         .onDelete(perform: deleteItems)
                     } header: {

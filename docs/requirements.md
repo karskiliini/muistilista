@@ -24,14 +24,15 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   "ostetut / kaikki" (esim. "3 / 8").
 - **R7** ✅ Työkalurivin painike "Tyhjennä ostetut" poistaa kaikki ostetut
   rivit kerralla. Painike on estetty, kun ostettuja ei ole.
-- **R8** ✅ Rivin veto vasemmalle poistaa sen (järjestelmän pyyhkäisytoiminto).
-  Jokaisen rivin oikeassa laidassa on pieni vasemmalle osoittava
-  nuolivihje (`‹`) kertomassa tästä.
-- **R9** ✅ Kappalemäärän säätö vedolla: ostamattoman rivin veto oikealle
-  rivin rungosta aloittaa säädön — siniseen "× N" -pilleriin päivittyvä
-  lukema kasvaa yhden askeleen per 36 pt vaakavetoa ja pienenee samassa
-  vedossa vasemmalle palattaessa, minimi 1. Sormen nosto tallentaa. Ostetun
-  rivin määrää ei voi säätää. Levossa rivi näyttää "× N" kun N > 1.
+- **R8** ✅ Tuotteen voi poistaa rivin pitkän painalluksen valikosta
+  ("Poista tuote"). Ostetun (ruksatun) rivin voi poistaa myös vetämällä
+  vasemmalle. Ostamattomilla riveillä vaakaveto on varattu määrän
+  säädölle (R9), joten niiden poisto tapahtuu valikosta.
+- **R9** ✅ Kappalemäärän säätö vedolla: ostamattoman rivin vaakaveto rivin
+  rungosta säätää määrää — oikealle nostaa, **vasemmalle laskee heti** —
+  yhden askeleen per 36 pt, minimi 1; siniseen "× N" -pilleriin päivittyvä
+  lukema. Sormen nosto tallentaa. Ostetun rivin määrää ei voi säätää.
+  Levossa rivi näyttää "× N" kun N > 1.
   Määrää voi säätää myös vetoeleen ulkopuolella: rivin pitkä painallus
   avaa valikon (lisää/vähennä), tuotenäkymässä on askellin, ja VoiceOver
   säätää määrää pyyhkäisemällä (saavutettava vaihtoehto eleelle).
