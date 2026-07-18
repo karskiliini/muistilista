@@ -75,4 +75,17 @@ final class StoreLocationTests: XCTestCase {
         XCTAssertNil(NearestStore.nearest(of: [(a, nil)],
                                           to: CLLocationCoordinate2D(latitude: 0, longitude: 0)))
     }
+
+    func testSKaupatUsesSelectedStoreId() {
+        SelectedStores.defaults = UserDefaults(suiteName: "SelectedStoresTests")!
+        defer { SelectedStores.defaults.removePersistentDomain(forName: "SelectedStoresTests") }
+        XCTAssertEqual(SKaupatCatalog(chainName: "S-market").resolvedStoreId,
+                       SKaupatCatalog.defaultStoreId, "no selection → representative default")
+        SelectedStores.select(StoreLocation(id: "708276035", name: "S-market Kommila Varkaus",
+                                            brand: "s-market", street: "", city: ""),
+                              for: "S-market")
+        XCTAssertEqual(SKaupatCatalog(chainName: "S-market").resolvedStoreId, "708276035")
+        XCTAssertEqual(SKaupatCatalog(chainName: "Prisma").resolvedStoreId,
+                       SKaupatCatalog.defaultStoreId, "other chain unaffected")
+    }
 }

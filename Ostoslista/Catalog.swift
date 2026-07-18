@@ -36,7 +36,7 @@ protocol CatalogProvider {
 /// catalog yet (then the manual add path is used).
 enum CatalogRegistry {
     static func provider(for storeName: String) -> CatalogProvider? {
-        if SKaupatCatalog.handles(storeName: storeName) { return SKaupatCatalog() }
+        if SKaupatCatalog.handles(storeName: storeName) { return SKaupatCatalog(chainName: storeName) }
         if PuuiloCatalog.handles(storeName: storeName) { return PuuiloCatalog() }
         if TokmanniCatalog.handles(storeName: storeName) { return TokmanniCatalog() }
         if KRautaCatalog.handles(storeName: storeName) { return KRautaCatalog() }

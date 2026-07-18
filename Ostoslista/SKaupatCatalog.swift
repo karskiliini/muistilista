@@ -11,6 +11,17 @@ struct SKaupatCatalog: CatalogProvider {
     private static let sGroupNeedles = ["prisma", "s-market", "smarket", "sale",
                                         "alepa", "abc", "sokos", "s-kaupat"]
 
+    /// App chain name ("S-market") — resolves the remembered store (R36).
+    let chainName: String
+    init(chainName: String = "") { self.chainName = chainName }
+
+    /// Selected store's id, or the historical representative store when
+    /// nothing is selected yet (auto/manual selection normally happens
+    /// before the first search; this is a defensive fallback).
+    var resolvedStoreId: String {
+        SelectedStores.selection(for: chainName)?.id ?? Self.defaultStoreId
+    }
+
     static func handles(storeName: String) -> Bool {
         let lower = storeName.lowercased()
         return sGroupNeedles.contains { lower.contains($0) }
@@ -41,7 +52,7 @@ struct SKaupatCatalog: CatalogProvider {
     }
 
     func search(_ query: String) async throws -> [CatalogProduct] {
-        guard let url = Self.searchURL(query: query, storeId: Self.defaultStoreId) else { return [] }
+        guard let url = Self.searchURL(query: query, storeId: resolvedStoreId) else { return [] }
         let (data, _) = try await URLSession.shared.data(
             for: CatalogHTTP.request(url, origin: "https://www.s-kaupat.fi"))
         return Self.parse(data)
