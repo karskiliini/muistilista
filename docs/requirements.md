@@ -42,6 +42,8 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
 - **R11** ✅ iOS-etusivulle on tarjolla pieni widget, joka näyttää
   ostettavana olevien (ruksaamattomien) tuotteiden määrän. Se päivittyy kun
   sovellus siirtyy taustalle, ja vähintään 30 minuutin välein.
+- **R35** 🔄 Widgetin napautus avaa sovelluksen suoraan päänäkymään
+  (ostoslistaan) — ei koskaan tyhjää tai mustaa ruutua.
 - **R12** ✅ Lista synkkautuu käyttäjän omien laitteiden välillä hänen
   iCloud-tilinsä kautta. Muutokset saapuvat automaattisesti hiljaisella
   push-ilmoituksella — laite päivittää itsensä ilman käyttäjän toimia.

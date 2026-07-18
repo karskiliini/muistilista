@@ -242,9 +242,7 @@ final class StoreProvider: ObservableObject {
 
     private func scheduleDedupe() {
         dedupeWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            Task { @MainActor in self?.dedupe() }
-        }
+        let work = DispatchWorkItem { [weak self] in self?.dedupe() }
         dedupeWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
     }
@@ -253,28 +251,40 @@ final class StoreProvider: ObservableObject {
     /// records. Every device deletes the same deterministically chosen
     /// victims (per group, the smallest CKRecord name survives), so
     /// concurrent passes on different devices converge on one copy.
-    @MainActor
+    ///
+    /// Runs on a background context: `recordID(for:)` waits synchronously on
+    /// the container's request executor, and behind an in-flight CloudKit
+    /// export that wait can last tens of seconds. On the main thread it froze
+    /// scene activation — widget tap showed a black screen until the 36 s
+    /// scene-update watchdog killed the app (R35). The viewContext picks the
+    /// deletions up via automaticallyMergesChangesFromParent.
     private func dedupe() {
-        guard let ckContainer = container as? NSPersistentCloudKitContainer,
-              let items = try? container.viewContext.fetch(CDShoppingItem.fetchRequest()),
-              items.count > 1 else { return }
+        guard let ckContainer = container as? NSPersistentCloudKitContainer else { return }
+        ckContainer.performBackgroundTask { context in
+            // Own author, so RemoteChangeNotifier doesn't banner this cleanup.
+            context.transactionAuthor = CoreDataStack.transactionAuthor
+            // Same conflict policy the viewContext used when it ran this pass.
+            context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+            guard let items = try? context.fetch(CDShoppingItem.fetchRequest()),
+                  items.count > 1 else { return }
 
-        let rows = items.map { item in
-            (id: item.objectID,
-             // Old rows have no uuid; fall back to full-content identity.
-             key: item.uuid?.uuidString
-                ?? "\(item.name)|\(item.createdAt.timeIntervalSince1970)|\(item.isDone)|\(item.quantity)",
-             tiebreak: ckContainer.recordID(for: item.objectID)?.recordName
-                ?? item.objectID.uriRepresentation().absoluteString)
-        }
-        let victims = ShoppingListLogic.duplicatesToDelete(rows)
-        guard !victims.isEmpty else { return }
-
-        for id in victims {
-            if let object = try? container.viewContext.existingObject(with: id) {
-                container.viewContext.delete(object)
+            let rows = items.map { item in
+                (id: item.objectID,
+                 // Old rows have no uuid; fall back to full-content identity.
+                 key: item.uuid?.uuidString
+                    ?? "\(item.name)|\(item.createdAt.timeIntervalSince1970)|\(item.isDone)|\(item.quantity)",
+                 tiebreak: ckContainer.recordID(for: item.objectID)?.recordName
+                    ?? item.objectID.uriRepresentation().absoluteString)
             }
+            let victims = ShoppingListLogic.duplicatesToDelete(rows)
+            guard !victims.isEmpty else { return }
+
+            for id in victims {
+                if let object = try? context.existingObject(with: id) {
+                    context.delete(object)
+                }
+            }
+            try? context.save()
         }
-        try? container.viewContext.save()
     }
 }
