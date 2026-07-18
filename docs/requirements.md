@@ -216,7 +216,7 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hyllynumero) ja tallentuu tuotteelle. Muille kaupoille tuotteella ei ole
   hyllypaikkaa. (Aiempi käsin syötettävä perheen hyllymuisti poistettu.)
 
-- **R36** 📋 Kauppahaku kohdistuu tiettyyn fyysiseen myymälään ketjuissa,
+- **R36** ✅ Kauppahaku kohdistuu tiettyyn fyysiseen myymälään ketjuissa,
   joiden rajapinta on myymäläkohtainen (ensin S-ryhmä:
   Prisma/S-market/Sale/Alepa/ABC; myöhemmin K-ruoka): tuotehaku näyttää
   vain valitun myymälän valikoiman ja hinnat. Ensimmäisellä käytöllä
