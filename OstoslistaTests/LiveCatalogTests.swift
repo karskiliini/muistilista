@@ -41,4 +41,24 @@ final class LiveCatalogTests: XCTestCase {
     func testMotonetLiveSearchReturnsProducts() async throws {
         try await assertFindsProducts(MotonetCatalog(), query: "jarrupala")
     }
+
+    func testStoreDirectoryFindsKommila() async throws {
+        let stores: [StoreLocation]
+        do {
+            stores = try await SKaupatStoreDirectory().searchStores(query: "kommila", brand: "s-market")
+        } catch {
+            throw XCTSkip("Network unavailable: \(error.localizedDescription)")
+        }
+        XCTAssertTrue(stores.contains { $0.id == "708276035" },
+                      "expected S-market Kommila Varkaus, got \(stores.map(\.name))")
+    }
+
+    func testSKaupatSearchWithSelectedKommilaStore() async throws {
+        SelectedStores.defaults = UserDefaults(suiteName: "LiveStoreTests")!
+        defer { SelectedStores.defaults.removePersistentDomain(forName: "LiveStoreTests") }
+        SelectedStores.select(StoreLocation(id: "708276035", name: "S-market Kommila Varkaus",
+                                            brand: "s-market", street: "Savontie 44", city: "Varkaus"),
+                              for: "S-market")
+        try await assertFindsProducts(SKaupatCatalog(chainName: "S-market"), query: "maito")
+    }
 }
