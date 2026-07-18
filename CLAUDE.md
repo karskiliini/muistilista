@@ -19,7 +19,8 @@ Jos prompti on jo katettu, mainitse vastaava R-numero vastauksessa.
 
 - Speksit: `docs/superpowers/specs/`, suunnitelmat: `docs/superpowers/plans/`.
 - Generoitua `Ostoslista.xcodeproj`:ää ei committoida; aja
-  `xcodegen generate` muutosten jälkeen (binääri:
-  `/opt/homebrew/Cellar/xcodegen/2.45.4/bin/xcodegen`).
+  `xcodegen generate` muutosten jälkeen (binääri Cellar-polusta:
+  `ls /opt/homebrew/Cellar/xcodegen/` kertoo version, esim.
+  `/opt/homebrew/Cellar/xcodegen/2.46.0/bin/xcodegen`).
 - Listalogiikka pidetään `ShoppingListLogic`issa tallennuskehyksestä
   riippumattomana ja yksikkötestattuna.

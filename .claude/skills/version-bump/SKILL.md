@@ -19,8 +19,9 @@ The app shows its version bottom-right on the main screen (R21), read from
      R-row in `docs/requirements.md`.
    - **Patch** (x.y.Z) — fix or polish of existing behavior; the register
      text stays the same or only gets clarified.
-3. Edit `MARKETING_VERSION` in `project.yml`, run
-   `/opt/homebrew/Cellar/xcodegen/2.45.4/bin/xcodegen generate`.
+3. Edit `MARKETING_VERSION` in `project.yml`, run xcodegen from the
+   Cellar path (`ls /opt/homebrew/Cellar/xcodegen/` for the current
+   version, e.g. `/opt/homebrew/Cellar/xcodegen/2.46.0/bin/xcodegen generate`).
 4. Include the version change in the SAME commit as the completed work,
    and mention the new version in the commit message (e.g. `(v1.6.0)`).
 
