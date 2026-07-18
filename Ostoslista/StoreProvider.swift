@@ -17,6 +17,9 @@ enum AppStores {
 final class StoreProvider: ObservableObject {
     let container: NSPersistentContainer
     @Published private(set) var currentList: CDShoppingList?
+    /// Whether the list already has a CKShare (toolbar shows the share
+    /// button with its text label until this turns true).
+    @Published private(set) var hasActiveShare = false
     private var isRefreshing = false
     private var activeCloudEvents: Set<UUID> = []
     private var dedupeWork: DispatchWorkItem?
@@ -34,7 +37,10 @@ final class StoreProvider: ObservableObject {
         }
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
         AppStores.provider = self
-        Task { @MainActor in self.ensureList() }
+        Task { @MainActor in
+            self.ensureList()
+            self.refreshShareStatus()
+        }
 
         NotificationCenter.default.addObserver(
             forName: PushDelegate.pushReceived, object: nil, queue: .main
@@ -167,12 +173,38 @@ final class StoreProvider: ObservableObject {
             throw CocoaError(.persistentStoreOperation)
         }
         let ckContainer = CKContainer(identifier: CoreDataStack.cloudKitContainerID)
-        if let share = try? ck.fetchShares(matching: [list.objectID])[list.objectID] {
+        if let share = await Self.existingShare(in: ck, for: list.objectID) {
+            hasActiveShare = true
             return (share, ckContainer)
         }
         let (_, share, shareContainer) = try await ck.share([list], to: nil)
         share[CKShare.SystemFieldKey.title] = "Ostoslista" as CKRecordValue
+        hasActiveShare = true
         return (share, shareContainer)
+    }
+
+    /// fetchShares(matching:) waits synchronously on the container's request
+    /// executor — behind CloudKit mirroring that wait can stall for a long
+    /// time, and on the main thread it froze the whole UI when the share
+    /// button was tapped (same failure class as the R35 dedupe hang). Always
+    /// call it detached from the main actor.
+    private static func existingShare(
+        in ck: NSPersistentCloudKitContainer, for listID: NSManagedObjectID
+    ) async -> CKShare? {
+        await Task.detached {
+            (try? ck.fetchShares(matching: [listID]))?[listID]
+        }.value
+    }
+
+    /// Refreshes `hasActiveShare` off the main thread (drives whether the
+    /// toolbar share button shows its "Jaa perheelle" text label).
+    func refreshShareStatus() {
+        guard let ck = container as? NSPersistentCloudKitContainer,
+              let listID = currentList?.objectID else { return }
+        Task { @MainActor [weak self] in
+            let share = await Self.existingShare(in: ck, for: listID)
+            self?.hasActiveShare = share != nil
+        }
     }
 
     // MARK: - Family shelf memory

@@ -344,8 +344,18 @@ struct ShoppingListView: View {
                     } label: {
                         if isSharing {
                             ProgressView()
-                        } else {
+                        } else if store.hasActiveShare {
+                            // Already shared → the icon alone suffices.
                             Label("Jaa perheelle", systemImage: "person.crop.circle.badge.plus")
+                        } else {
+                            // Not shared yet: show the text too, so the
+                            // feature is discoverable (icon alone wasn't).
+                            // Explicit HStack because the toolbar renders a
+                            // Label icon-only even with .titleAndIcon.
+                            HStack(spacing: 4) {
+                                Image(systemName: "person.crop.circle.badge.plus")
+                                Text("Jaa perheelle")
+                            }
                         }
                     }
                     .disabled(isSharing)

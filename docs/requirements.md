@@ -51,7 +51,9 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   ja kaikki osapuolet voivat lisätä, ruksata, säätää ja poistaa rivejä
   samasta listasta. Jako käynnistetään työkalurivin "Jaa perheelle"
   -napista (Applen jakonäkymä, kutsu esim. Viesteillä); kutsun hyväksyntä
-  avaa saman listan vastaanottajan appiin. (Toteutus valmis 16.7.2026 —
+  avaa saman listan vastaanottajan appiin. Löydettävyys: nappi näyttää
+  ikonin lisäksi tekstin "Jaa perheelle" kunnes lista on jaettu; jaon
+  jälkeen näkyy pelkkä ikoni. (Toteutus valmis 16.7.2026 —
   tila vaihtuu ✅:ksi kun päästä päähän -testi perheenjäsenen laitteella
   on tehty; jakelu vaatii R15:n TestFlightin.)
 - **R14** ✅ Sama sovellus toimii myös Macilla (mm. tuotteiden helppoon
