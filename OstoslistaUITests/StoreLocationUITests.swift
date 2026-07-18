@@ -26,6 +26,16 @@ final class StoreLocationUITests: XCTestCase {
         let search = element("store-location-search")
         XCTAssertTrue(search.waitForExistence(timeout: 5), "picker sheet should auto-open")
         search.tap()
+
+        // Brand filter check: "mikkeli" matches the Prisma fixture store by
+        // name, so if the S-market chain filter broke, its row would appear.
+        search.typeText("mikkeli")
+        XCTAssertTrue(app.staticTexts["Ei osumia"].firstMatch.waitForExistence(timeout: 5),
+                      "s-market chain must not surface Prisma stores")
+        XCTAssertFalse(app.staticTexts["Prisma Mikkeli"].firstMatch.exists,
+                        "brand filter must exclude other chains")
+        search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 7))
+
         search.typeText("kommila")
 
         let kommila = app.staticTexts["S-market Kommila Varkaus"].firstMatch
@@ -34,6 +44,8 @@ final class StoreLocationUITests: XCTestCase {
 
         // Sheet closes; the row remembers the choice; brand filter held
         // (Prisma fixture store must not appear for the S-market chain).
+        XCTAssertFalse(search.waitForExistence(timeout: 2), "picker sheet should close after selection")
+
         let row = element("store-location-row")
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["S-market Kommila Varkaus"].firstMatch
