@@ -42,4 +42,17 @@ final class StoreLocationTests: XCTestCase {
         XCTAssertEqual(SKaupatStoreDirectory.chainBrands["Prisma"], "prisma")
         XCTAssertNil(SKaupatStoreDirectory.chainBrands["Tokmanni"])
     }
+
+    func testSelectedStoreRoundTrip() {
+        SelectedStores.defaults = UserDefaults(suiteName: "SelectedStoresTests")!
+        defer { SelectedStores.defaults.removePersistentDomain(forName: "SelectedStoresTests") }
+        XCTAssertNil(SelectedStores.selection(for: "S-market"))
+        let kommila = StoreLocation(id: "708276035", name: "S-market Kommila Varkaus",
+                                    brand: "s-market", street: "Savontie 44", city: "Varkaus")
+        SelectedStores.select(kommila, for: "S-market")
+        XCTAssertEqual(SelectedStores.selection(for: "S-market"), kommila)
+        XCTAssertNil(SelectedStores.selection(for: "Prisma"), "selection is per chain")
+        SelectedStores.select(nil, for: "S-market")
+        XCTAssertNil(SelectedStores.selection(for: "S-market"))
+    }
 }
