@@ -75,8 +75,11 @@ providerit eivät muutu.
 
 - Myymälähaku ei vastaa → sheetissä "Myymälöitä ei saatu haettua —
   yritä uudelleen".
-- Muistettu myymälä lakkaa toimimasta (haku palauttaa virheen/tyhjää
-  id:llä) → valinta nollataan ja pyydetään valitsemaan uudelleen.
+- Muistettu myymälä lakkaa toimimasta (esim. myymälä suljettu):
+  automaattista nollausta EI tehdä, koska tyhjä hakutulos ei erotu
+  luotettavasti normaalista "ei osumia" -tilanteesta ja väärä tunnistus
+  pyyhkisi toimivan valinnan. Myymälärivi on aina näkyvissä ja valinnan
+  voi vaihtaa käsin.
 
 ### Testit
 
