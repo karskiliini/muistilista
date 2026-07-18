@@ -59,6 +59,8 @@ final class LiveCatalogTests: XCTestCase {
         SelectedStores.select(StoreLocation(id: "708276035", name: "S-market Kommila Varkaus",
                                             brand: "s-market", street: "Savontie 44", city: "Varkaus"),
                               for: "S-market")
+        XCTAssertEqual(SKaupatCatalog(chainName: "S-market").resolvedStoreId, "708276035",
+                       "selection must drive the store id before we hit the network")
         try await assertFindsProducts(SKaupatCatalog(chainName: "S-market"), query: "maito")
     }
 }
