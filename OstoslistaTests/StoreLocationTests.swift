@@ -1,5 +1,6 @@
 // OstoslistaTests/StoreLocationTests.swift
 import XCTest
+import CoreLocation
 @testable import Ostoslista
 
 final class StoreLocationTests: XCTestCase {
@@ -54,5 +55,24 @@ final class StoreLocationTests: XCTestCase {
         XCTAssertNil(SelectedStores.selection(for: "Prisma"), "selection is per chain")
         SelectedStores.select(nil, for: "S-market")
         XCTAssertNil(SelectedStores.selection(for: "S-market"))
+    }
+
+    func testNearestPicksClosestAndSkipsUngeocodable() {
+        let a = StoreLocation(id: "1", name: "A", brand: "s-market", street: "x", city: "y")
+        let b = StoreLocation(id: "2", name: "B", brand: "s-market", street: "x", city: "y")
+        let c = StoreLocation(id: "3", name: "C", brand: "s-market", street: "x", city: "y")
+        let user = CLLocationCoordinate2D(latitude: 62.31, longitude: 27.88)  // Varkaus
+        let picked = NearestStore.nearest(of: [
+            (a, CLLocationCoordinate2D(latitude: 60.17, longitude: 24.94)),   // Helsinki ~300 km
+            (b, CLLocationCoordinate2D(latitude: 62.32, longitude: 27.90)),   // ~1 km
+            (c, nil),                                                          // geocode failed
+        ], to: user)
+        XCTAssertEqual(picked?.id, "2")
+    }
+
+    func testNearestReturnsNilWhenNothingGeocoded() {
+        let a = StoreLocation(id: "1", name: "A", brand: "sale", street: "x", city: "y")
+        XCTAssertNil(NearestStore.nearest(of: [(a, nil)],
+                                          to: CLLocationCoordinate2D(latitude: 0, longitude: 0)))
     }
 }
