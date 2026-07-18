@@ -216,6 +216,20 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hyllynumero) ja tallentuu tuotteelle. Muille kaupoille tuotteella ei ole
   hyllypaikkaa. (Aiempi käsin syötettävä perheen hyllymuisti poistettu.)
 
+- **R36** 📋 Kauppahaku kohdistuu käyttäjän valitsemaan fyysiseen myymälään
+  niissä ketjuissa, joiden rajapinta on myymäläkohtainen (ensin S-ryhmä:
+  Prisma/S-market/Sale/Alepa/ABC; myöhemmin K-ruoka): kauppanäkymässä voi
+  hakea myymälää nimellä ja valita sen (esim. "S-market Kommila Varkaus"),
+  ja tuotehaku näyttää vain valitun myymälän valikoiman ja hinnat. Valittu
+  myymälä muistetaan ketjukohtaisesti, eikä sitä tarvitse valita uudelleen.
+  Listan ryhmittely säilyy ketjun nimellä (R30). Valtakunnallisen indeksin
+  ketjut (Tokmanni, Puuilo, Motonet, Gigantti) hakevat kuten ennen.
+- **R37** 📋 Ostoslistaa voi käyttää tekoälyavustajalla MCP:n kautta:
+  assistentti (esim. Claude) voi lukea listan sekä lisätä, ruksata ja
+  poistaa rivejä, jolloin ostoslistan voi laatia tekoälyllä keskustellen.
+  (Arkkitehtuuri — palvelimen sijoituspaikka ja kytkentä CloudKit-synkkaan —
+  päätetään erillisessä speksissä.)
+
 - **R27** ✅ Sovellus seuraa kaatumisia: uncaught-poikkeukset, fataalit
   signaalit (SIGABRT/SIGSEGV/…) ja Core Datan tietovaraston latausvirheet
   tallennetaan App Group -tiedostoon (syy, versio, pino). Seuraavalla
