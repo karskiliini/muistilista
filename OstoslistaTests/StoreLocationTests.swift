@@ -76,6 +76,16 @@ final class StoreLocationTests: XCTestCase {
                                           to: CLLocationCoordinate2D(latitude: 0, longitude: 0)))
     }
 
+    func testAutoSelectKeepsExistingSelection() async {
+        SelectedStores.defaults = UserDefaults(suiteName: "SelectedStoresTests")!
+        defer { SelectedStores.defaults.removePersistentDomain(forName: "SelectedStoresTests") }
+        let kommila = StoreLocation(id: "708276035", name: "S-market Kommila Varkaus",
+                                    brand: "s-market", street: "Savontie 44", city: "Varkaus")
+        SelectedStores.select(kommila, for: "S-market")
+        let result = await NearestStore.autoSelect(chain: "S-market")
+        XCTAssertEqual(result, kommila, "existing selection must win — auto-select never replaces it")
+    }
+
     func testSKaupatUsesSelectedStoreId() {
         SelectedStores.defaults = UserDefaults(suiteName: "SelectedStoresTests")!
         defer { SelectedStores.defaults.removePersistentDomain(forName: "SelectedStoresTests") }

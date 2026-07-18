@@ -25,7 +25,7 @@ struct StoreAddView: View {
     @FocusState private var productFocused: Bool
     @State private var storeLocation: StoreLocation?
     @State private var locationSheetPresented = false
-    @State private var autoSelecting = false
+    @State private var autoSelectingChain: String?
 
     init(initialQuery: String = "", onAdded: @escaping (NSManagedObjectID) -> Void = { _ in }) {
         self.initialQuery = initialQuery
@@ -95,7 +95,7 @@ struct StoreAddView: View {
                               systemImage: "mappin.and.ellipse")
                             .foregroundStyle(storeLocation == nil ? .secondary : .primary)
                         Spacer()
-                        if autoSelecting { ProgressView() }
+                        if autoSelectingChain == storeName { ProgressView() }
                     }
                 }
                 .accessibilityIdentifier("store-location-row")
@@ -178,17 +178,25 @@ struct StoreAddView: View {
     /// CoreLocation prompts, R18).
     private func refreshStoreLocation() {
         storeLocation = SelectedStores.selection(for: storeName)
+        // A different chain's in-flight auto-select must not block this
+        // one — only this chain's own in-flight task is a reason to wait.
         guard storeLocation == nil,
               SKaupatStoreDirectory.chainBrands[storeName] != nil,
-              !autoSelecting else { return }
+              autoSelectingChain != storeName else { return }
         if StoreDirectory.isFixtureMode { locationSheetPresented = true; return }
-        autoSelecting = true
+        let chain = storeName
+        autoSelectingChain = chain
         Task {
-            let chosen = await NearestStore.autoSelect(chain: storeName)
+            _ = await NearestStore.autoSelect(chain: chain)
             await MainActor.run {
-                autoSelecting = false
-                if let chosen {
-                    storeLocation = chosen
+                if autoSelectingChain == chain { autoSelectingChain = nil }
+                // The user may have switched to another chain while this
+                // resolved — a stale completion must not touch its UI.
+                guard chain == storeName else { return }
+                // Re-read rather than trust the task's return value: a
+                // manual pick made meanwhile wins over the auto-selected one.
+                storeLocation = SelectedStores.selection(for: chain)
+                if storeLocation != nil {
                     onStoreOrQueryChanged()
                 } else {
                     locationSheetPresented = true
