@@ -60,7 +60,10 @@ struct SKaupatStoreDirectory {
         var request = URLRequest(url: comps.url!)
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
                          forHTTPHeaderField: "User-Agent")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
         let all = Self.parse(String(decoding: data, as: UTF8.self))
         guard let brand else { return all }
         return all.filter { $0.brand == brand }

@@ -35,7 +35,7 @@ targets:
         # export-compliance question in App Store Connect.
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.shopping
-        NSLocationWhenInUseUsageDescription: "Sijaintia käytetään lähimmän K-ruokakaupan valintaan tuotehakuun."
+        NSLocationWhenInUseUsageDescription: "Sijaintia käytetään lähimmän myymälän valintaan tuotehakuun."
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]
         UISupportedInterfaceOrientations:

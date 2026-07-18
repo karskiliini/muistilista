@@ -27,7 +27,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.shopping</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Sijaintia käytetään lähimmän K-ruokakaupan valintaan tuotehakuun.</string>
+	<string>Sijaintia käytetään lähimmän myymälän valintaan tuotehakuun.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
