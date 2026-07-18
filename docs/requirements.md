@@ -216,14 +216,16 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   hyllynumero) ja tallentuu tuotteelle. Muille kaupoille tuotteella ei ole
   hyllypaikkaa. (Aiempi käsin syötettävä perheen hyllymuisti poistettu.)
 
-- **R36** 📋 Kauppahaku kohdistuu käyttäjän valitsemaan fyysiseen myymälään
-  niissä ketjuissa, joiden rajapinta on myymäläkohtainen (ensin S-ryhmä:
-  Prisma/S-market/Sale/Alepa/ABC; myöhemmin K-ruoka): kauppanäkymässä voi
-  hakea myymälää nimellä ja valita sen (esim. "S-market Kommila Varkaus"),
-  ja tuotehaku näyttää vain valitun myymälän valikoiman ja hinnat. Valittu
-  myymälä muistetaan ketjukohtaisesti, eikä sitä tarvitse valita uudelleen.
-  Listan ryhmittely säilyy ketjun nimellä (R30). Valtakunnallisen indeksin
-  ketjut (Tokmanni, Puuilo, Motonet, Gigantti) hakevat kuten ennen.
+- **R36** 📋 Kauppahaku kohdistuu tiettyyn fyysiseen myymälään ketjuissa,
+  joiden rajapinta on myymäläkohtainen (ensin S-ryhmä:
+  Prisma/S-market/Sale/Alepa/ABC; myöhemmin K-ruoka): tuotehaku näyttää
+  vain valitun myymälän valikoiman ja hinnat. Ensimmäisellä käytöllä
+  myymäläksi valitaan automaattisesti lähin laitteen sijainnin perusteella;
+  myymälän voi aina vaihtaa käsin hakemalla nimellä (esim. "S-market
+  Kommila Varkaus"). Valinta muistetaan ketjukohtaisesti, eikä sitä
+  tarvitse valita uudelleen. Listan ryhmittely säilyy ketjun nimellä (R30).
+  Valtakunnallisen indeksin ketjut (Tokmanni, Puuilo, Motonet, Gigantti)
+  hakevat kuten ennen.
 - **R37** 📋 Ostoslistaa voi käyttää tekoälyavustajalla MCP:n kautta:
   assistentti (esim. Claude) voi lukea listan sekä lisätä, ruksata ja
   poistaa rivejä, jolloin ostoslistan voi laatia tekoälyllä keskustellen.
