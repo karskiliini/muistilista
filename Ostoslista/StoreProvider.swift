@@ -33,6 +33,12 @@ final class StoreProvider: ObservableObject {
         container = CoreDataStack.container(inMemory: ephemeral, cloudKit: !ephemeral)
         if ephemeral {
             UserDefaults.standard.removeObject(forKey: "lastStoreName")   // deterministic picker
+            // App Group UserDefaults persist across simulator runs, so a
+            // manual store-location pick from an earlier UI test would
+            // otherwise survive into this one and skip the picker sheet.
+            for chain in SKaupatStoreDirectory.chainBrands.keys {
+                SelectedStores.select(nil, for: chain)
+            }
             Self.seedForUITests(container.viewContext)
         }
         remoteChangeNotifier = RemoteChangeNotifier(container: container)
