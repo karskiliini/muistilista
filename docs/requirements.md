@@ -57,7 +57,7 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
 - **R14** ✅ Sama sovellus toimii myös Macilla (mm. tuotteiden helppoon
   kirjoittamiseen ja monilaiteympäristön testaamiseen) sekä iPadilla, samaa
   listaa synkaten.
-- **R15** 📋 Sovellus jaellaan perheen puhelimiin TestFlightin kautta.
+- **R15** ✅ Sovellus jaellaan perheen puhelimiin TestFlightin kautta.
 - **R19** ✅ Listan voi pakottaa päivittymään vetämällä listaa alaspäin
   (pull-to-refresh). Päivityksen valmistuttua lista palaa paikalleen
   pehmeästi animoiden — myös sormen ollessa yhä alhaalla — eikä koskaan
