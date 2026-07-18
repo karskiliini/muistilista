@@ -66,3 +66,27 @@ struct SKaupatStoreDirectory {
         return all.filter { $0.brand == brand }
     }
 }
+
+/// Entry point the UI uses. In UI tests the env var
+/// UITEST_STORELOCATIONS ("id|name|brand|street|city;…") replaces the
+/// network so the sheet works offline (R18).
+enum StoreDirectory {
+    static func search(query: String, brand: String?) async throws -> [StoreLocation] {
+        if let fixture = ProcessInfo.processInfo.environment["UITEST_STORELOCATIONS"] {
+            let all = fixture.split(separator: ";").compactMap { entry -> StoreLocation? in
+                let f = entry.split(separator: "|").map(String.init)
+                guard f.count == 5 else { return nil }
+                return StoreLocation(id: f[0], name: f[1], brand: f[2], street: f[3], city: f[4])
+            }
+            let q = query.lowercased()
+            return all.filter { (brand == nil || $0.brand == brand)
+                && (q.isEmpty || $0.name.lowercased().contains(q)) }
+        }
+        return try await SKaupatStoreDirectory().searchStores(query: query, brand: brand)
+    }
+
+    /// UI tests must not trigger CoreLocation prompts.
+    static var isFixtureMode: Bool {
+        ProcessInfo.processInfo.environment["UITEST_STORELOCATIONS"] != nil
+    }
+}

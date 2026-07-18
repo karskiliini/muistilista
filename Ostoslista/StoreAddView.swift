@@ -23,6 +23,9 @@ struct StoreAddView: View {
     @State private var searching = false
     @State private var searchTask: Task<Void, Never>?
     @FocusState private var productFocused: Bool
+    @State private var storeLocation: StoreLocation?
+    @State private var locationSheetPresented = false
+    @State private var autoSelecting = false
 
     init(initialQuery: String = "", onAdded: @escaping (NSManagedObjectID) -> Void = { _ in }) {
         self.initialQuery = initialQuery
@@ -52,6 +55,13 @@ struct StoreAddView: View {
                     onStoreOrQueryChanged()
                 }
                 productFocused = true
+                refreshStoreLocation()
+            }
+            .sheet(isPresented: $locationSheetPresented) {
+                StoreLocationSheet(chain: storeName) { chosen in
+                    storeLocation = chosen
+                    onStoreOrQueryChanged()
+                }
             }
         }
     }
@@ -62,7 +72,7 @@ struct StoreAddView: View {
                 ForEach(Stores.groups) { group in
                     Section(group.name) {
                         ForEach(group.stores, id: \.self) { name in
-                            Button(name) { storeName = name; onStoreOrQueryChanged() }
+                            Button(name) { storeName = name; refreshStoreLocation(); onStoreOrQueryChanged() }
                         }
                     }
                 }
@@ -76,6 +86,20 @@ struct StoreAddView: View {
                 }
             }
             .accessibilityIdentifier("store-picker")
+            if SKaupatStoreDirectory.chainBrands[storeName] != nil {
+                Button {
+                    locationSheetPresented = true
+                } label: {
+                    HStack {
+                        Label(storeLocation?.name ?? "Valitse myymälä",
+                              systemImage: "mappin.and.ellipse")
+                            .foregroundStyle(storeLocation == nil ? .secondary : .primary)
+                        Spacer()
+                        if autoSelecting { ProgressView() }
+                    }
+                }
+                .accessibilityIdentifier("store-location-row")
+            }
         }
     }
 
@@ -148,9 +172,39 @@ struct StoreAddView: View {
 
     // MARK: - Behavior
 
+    /// Loads the remembered store for the chain; when none and the chain is
+    /// store-specific, tries the automatic nearest pick and falls back to
+    /// the manual sheet (R36). Skipped in UI-test fixture mode (no
+    /// CoreLocation prompts, R18).
+    private func refreshStoreLocation() {
+        storeLocation = SelectedStores.selection(for: storeName)
+        guard storeLocation == nil,
+              SKaupatStoreDirectory.chainBrands[storeName] != nil,
+              !autoSelecting else { return }
+        if StoreDirectory.isFixtureMode { locationSheetPresented = true; return }
+        autoSelecting = true
+        Task {
+            let chosen = await NearestStore.autoSelect(chain: storeName)
+            await MainActor.run {
+                autoSelecting = false
+                if let chosen {
+                    storeLocation = chosen
+                    onStoreOrQueryChanged()
+                } else {
+                    locationSheetPresented = true
+                }
+            }
+        }
+    }
+
     /// Debounced catalog search whenever store or query changes.
     private func onStoreOrQueryChanged() {
         searchTask?.cancel()
+        // R36: store-specific chains search only after a store is chosen.
+        if SKaupatStoreDirectory.chainBrands[storeName] != nil,
+           SelectedStores.selection(for: storeName) == nil {
+            results = []; searching = false; return
+        }
         guard let catalog, let query = ShoppingListLogic.normalized(productName) else {
             results = []; searching = false; return
         }
