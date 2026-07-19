@@ -2,13 +2,14 @@ import SwiftUI
 
 /// Detail of a catalog search result (before it's on the list): image(s),
 /// price, brand, shelf/category and description, with a prominent add
-/// button. Pushed from the store search; adding closes the whole store
-/// view and drops the item onto the list.
+/// button. Pushed from the store search; adding pops back to the search,
+/// which stays open for the next item (R23).
 struct CatalogProductDetailView: View {
     let product: CatalogProduct
     let storeName: String
     let onAdd: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject private var motonet = MotonetWebEngine.shared
     @State private var motonetShelf: String?
     @State private var loadingShelf = false
@@ -51,7 +52,7 @@ struct CatalogProductDetailView: View {
                 Section("Kuvaus") { Text(desc) }
             }
             Section {
-                Button(action: onAdd) {
+                Button { onAdd(); dismiss() } label: {
                     Label("Lisää listalle", systemImage: "plus.circle.fill")
                         .frame(maxWidth: .infinity)
                         .font(.headline)
@@ -64,7 +65,9 @@ struct CatalogProductDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onAdd) { Label("Lisää listalle", systemImage: "plus") }
+                Button { onAdd(); dismiss() } label: {
+                    Label("Lisää listalle", systemImage: "plus")
+                }
             }
         }
         .sheet(isPresented: $showStoreSheet) { MotonetStoreSheet() }

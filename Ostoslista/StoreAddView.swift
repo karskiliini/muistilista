@@ -238,9 +238,9 @@ struct StoreAddView: View {
     }
 
     /// Shared insert: item lands in the list's store and carries the
-    /// catalog's price/description/images/shelf when present. Adding one
-    /// item closes the store view and hands the new item's ID back so the
-    /// list can scroll to it.
+    /// catalog's price/description/images/shelf when present. The store view
+    /// stays open for the next item (R23) — only the query clears — and the
+    /// new item's ID is handed back so the list can scroll to it on close.
     private func insert(name: String, shelf: String?, catalog: CatalogProduct?, quantity: Int) {
         guard let storeTrimmed = ShoppingListLogic.normalized(storeName) else { return }
         let item = CDShoppingItem(context: context)
@@ -259,7 +259,11 @@ struct StoreAddView: View {
         }
         try? context.save()   // makes the objectID permanent
         onAdded(item.objectID)
-        dismiss()
+        // Stay in the store view for the next item (R23): clear the query,
+        // keep the store selection, put focus back in the field.
+        productName = ""
+        results = []
+        productFocused = true
     }
 }
 

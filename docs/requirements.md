@@ -183,9 +183,11 @@ Tilat: ✅ toteutettu · 🔄 työn alla · 📋 suunniteltu
   tavalla. Hakutulosriviä napauttamalla avautuu tuotteen detail-näkymä
   (kuva/hinta/merkki/hyllypaikka/kategoria/kuvaus), josta voi painaa +
   (lisää listalle) tai palata takaisin hakuun. Kun tuote lisätään
-  kauppanäkymästä, kauppanäkymä animoituu pois (sulkeutuu) ja lista
-  skrollaa juuri lisättyyn tuotteeseen, joka ilmestyy paikalleen
-  animoituna. Viimeisin valittu kauppa säilyy oletuksena seuraavilla
+  kauppanäkymästä, kauppanäkymä JÄÄ AUKI seuraavaa lisäystä varten:
+  hakukenttä tyhjenee, sama kauppa pysyy valittuna ja fokus palaa
+  hakukenttään (tuotesivulta lisättäessä palataan hakulistaan). Kun
+  näkymä suljetaan ("Valmis"), lista skrollaa viimeksi lisättyyn
+  tuotteeseen. Viimeisin valittu kauppa säilyy oletuksena seuraavilla
   hauilla (ja käynnistysten yli).
 - **R26** ✅ Kaupasta lisätyistä tuotteista listalla näkyy pikkukuva, hinta
   ja kauppa/hyllypaikka; info-napista avautuu tuotenäkymä jossa kuva(t),
