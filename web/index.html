@@ -519,8 +519,10 @@
     function loadStore() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw && raw.length <= 1024 * 1024) {
-                const candidate = validStore(JSON.parse(raw));
+            if (raw) {
+                // Validate persisted shapes without discarding older user-created
+                // lists that exceed the new limits for externally shared imports.
+                const candidate = validStore(JSON.parse(raw), false);
                 if (candidate) return candidate;
             }
         } catch(e) {}

@@ -30,3 +30,11 @@ test('URL import rejection leaves the current list and storage untouched', () =>
   assert.equal(vm.runInContext('JSON.stringify(store)', context), before);
   assert.equal(writes, 0);
 });
+
+test('existing saved lists retain their valid data beyond new shared-link limits', () => {
+  const saved = { listName: 'x'.repeat(129), categories: [{ name: 'old', items: Array.from({ length: 1001 }, (_, i) => ({ n: `item ${i}`, p: false })) }] };
+  assert.equal(validStore(saved), null);
+  assert.deepEqual(validStore(saved, false), saved);
+  saved.categories[0].items[0].n = {};
+  assert.equal(validStore(saved, false), null);
+});

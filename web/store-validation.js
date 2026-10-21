@@ -1,12 +1,12 @@
 // Validate untrusted URL/localStorage data before it can replace the saved list.
-function validStore(value) {
-  if (!value || typeof value !== 'object' || typeof value.listName !== 'string' || value.listName.length > 128 ||
-      !Array.isArray(value.categories) || value.categories.length > 100) return null;
+function validStore(value, enforceImportLimits = true) {
+  if (!value || typeof value !== 'object' || typeof value.listName !== 'string' || (enforceImportLimits && value.listName.length > 128) ||
+      !Array.isArray(value.categories) || (enforceImportLimits && value.categories.length > 100)) return null;
   let count = 0;
   for (const category of value.categories) {
-    if (!category || typeof category.name !== 'string' || category.name.length > 256 || !Array.isArray(category.items)) return null;
+    if (!category || typeof category.name !== 'string' || (enforceImportLimits && category.name.length > 256) || !Array.isArray(category.items)) return null;
     count += category.items.length;
-    if (count > 1000 || category.items.some(item => !item || typeof item.n !== 'string' || item.n.length > 256 || typeof item.p !== 'boolean')) return null;
+    if ((enforceImportLimits && count > 1000) || category.items.some(item => !item || typeof item.n !== 'string' || (enforceImportLimits && item.n.length > 256) || typeof item.p !== 'boolean')) return null;
   }
   // Reconstruct only the expected properties; keep no prototype/extra fields.
   return { listName: value.listName, categories: value.categories.map(c => ({ name: c.name, items: c.items.map(i => ({ n: i.n, p: i.p })) })) };
