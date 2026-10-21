@@ -2,6 +2,7 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -469,7 +470,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="store-validation.js"></script>
 <script>
     const STORAGE_KEY = 'muistilista_data';
 
@@ -517,7 +519,12 @@
     function loadStore() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
+            if (raw) {
+                // Validate persisted shapes without discarding older user-created
+                // lists that exceed the new limits for externally shared imports.
+                const candidate = validStore(JSON.parse(raw), false);
+                if (candidate) return candidate;
+            }
         } catch(e) {}
         return defaultData();
     }
@@ -744,12 +751,9 @@
         const qrData = params.get('list');
         if (qrData) {
             try {
-                const parsed = JSON.parse(decodeURIComponent(qrData));
-                store.listName = parsed.n;
-                store.categories = parsed.items.map(c => ({
-                    name: c.c,
-                    items: c.i.map(n => ({n, p: false}))
-                }));
+                const candidate = importedStore(qrData);
+                if (!candidate) return;
+                store = candidate;
                 save();
                 window.history.replaceState({}, '', window.location.pathname);
             } catch(e) {}
